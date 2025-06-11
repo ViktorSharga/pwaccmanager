@@ -329,23 +329,29 @@ class MainWindow(QMainWindow):
             QTableWidget::item {
                 padding: 8px;
                 border: none;
+                color: #212121;
+                font-weight: 500;
             }
             QTableWidget::item:hover {
                 background-color: #f0f8ff;
+                color: #212121;
             }
             QTableWidget::item:selected {
-                background-color: #2196f3;
-                color: white;
+                background-color: #1976d2;
+                color: #ffffff;
+                font-weight: 600;
             }
             QTableWidget QHeaderView::section {
                 background-color: #f5f5f5;
                 border: 1px solid #d0d0d0;
                 padding: 8px;
                 font-weight: bold;
-                color: #333333;
+                color: #212121;
+                font-size: 13px;
             }
             QTableWidget QHeaderView::section:hover {
                 background-color: #e0e0e0;
+                color: #212121;
             }
             QTableWidget QHeaderView::section:first {
                 text-align: center;
@@ -442,16 +448,21 @@ class MainWindow(QMainWindow):
         play_btn.setToolTip("Launch game")
         play_btn.setStyleSheet("""
             QPushButton {
-                background-color: #4caf50;
-                color: white;
-                border: none;
+                background-color: #2e7d32;
+                color: #ffffff;
+                border: 1px solid #1b5e20;
                 border-radius: 2px;
-                font-size: 10px;
-                font-weight: bold;
-                text-align: center;
+                font-size: 11px;
+                font-weight: 900;
+                font-family: Arial, sans-serif;
             }
             QPushButton:hover {
-                background-color: #45a049;
+                background-color: #388e3c;
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background-color: #1b5e20;
+                color: #ffffff;
             }
         """)
         play_btn.clicked.connect(partial(self.launch_account, row))
@@ -463,16 +474,21 @@ class MainWindow(QMainWindow):
         kill_btn.setToolTip("Close game")
         kill_btn.setStyleSheet("""
             QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
+                background-color: #d32f2f;
+                color: #ffffff;
+                border: 1px solid #b71c1c;
                 border-radius: 2px;
-                font-size: 10px;
-                font-weight: bold;
-                text-align: center;
+                font-size: 11px;
+                font-weight: 900;
+                font-family: Arial, sans-serif;
             }
             QPushButton:hover {
-                background-color: #da190b;
+                background-color: #f44336;
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background-color: #b71c1c;
+                color: #ffffff;
             }
         """)
         kill_btn.clicked.connect(partial(self.close_account, row))
@@ -484,16 +500,21 @@ class MainWindow(QMainWindow):
         menu_btn.setToolTip("More options")
         menu_btn.setStyleSheet("""
             QPushButton {
-                background-color: #2196f3;
-                color: white;
-                border: none;
+                background-color: #1976d2;
+                color: #ffffff;
+                border: 1px solid #0d47a1;
                 border-radius: 2px;
-                font-size: 12px;
-                font-weight: bold;
-                text-align: center;
+                font-size: 13px;
+                font-weight: 900;
+                font-family: Arial, sans-serif;
             }
             QPushButton:hover {
-                background-color: #1976d2;
+                background-color: #2196f3;
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background-color: #0d47a1;
+                color: #ffffff;
             }
         """)
         
