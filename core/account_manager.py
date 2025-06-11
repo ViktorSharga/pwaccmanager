@@ -10,12 +10,13 @@ from utils.app_paths import get_accounts_file_path, ensure_data_dir_exists
 
 class Account:
     def __init__(self, login: str, password: str, character_name: str = "", 
-                 description: str = "", owner: str = ""):
+                 description: str = "", owner: str = "", server: str = "Main"):
         self.login = login
         self.password = password
         self.character_name = character_name
         self.description = description
         self.owner = owner
+        self.server = server
         self.pid = None  # Process ID when running
     
     def to_dict(self):
@@ -25,7 +26,8 @@ class Account:
             "password": self.password,
             "character_name": self.character_name,
             "description": self.description,
-            "owner": self.owner
+            "owner": self.owner,
+            "server": self.server
         }
     
     @classmethod
@@ -36,7 +38,8 @@ class Account:
             password=data.get("password", ""),
             character_name=data.get("character_name", ""),
             description=data.get("description", ""),
-            owner=data.get("owner", "")
+            owner=data.get("owner", ""),
+            server=data.get("server", "Main")  # Default to "Main" for migration
         )
 
 

@@ -2,13 +2,13 @@
 
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
                              QLineEdit, QPushButton, QLabel, QMessageBox,
-                             QFileDialog, QDialogButtonBox, QSpinBox)
+                             QFileDialog, QDialogButtonBox, QSpinBox, QComboBox)
 from PySide6.QtCore import Qt
 
 from core.account_manager import Account
 from utils.validators import (validate_login, validate_password, 
                             validate_character_name, validate_description,
-                            validate_owner)
+                            validate_owner, validate_server)
 
 
 class AccountDialog(QDialog):
@@ -62,6 +62,12 @@ class AccountDialog(QDialog):
         self.owner_edit.setPlaceholderText("Optional")
         form_layout.addRow("Owner:", self.owner_edit)
         
+        # Server field
+        self.server_combo = QComboBox()
+        self.server_combo.addItems(["Main", "X"])
+        self.server_combo.setCurrentText("Main")
+        form_layout.addRow("Server:", self.server_combo)
+        
         layout.addLayout(form_layout)
         
         # Buttons
@@ -84,6 +90,7 @@ class AccountDialog(QDialog):
             self.character_edit.setText(self.account.character_name)
             self.description_edit.setText(self.account.description)
             self.owner_edit.setText(self.account.owner)
+            self.server_combo.setCurrentText(getattr(self.account, 'server', 'Main'))
     
     def validate_and_accept(self):
         """Validate input and accept if valid"""
@@ -93,6 +100,7 @@ class AccountDialog(QDialog):
         character = self.character_edit.text().strip()
         description = self.description_edit.text().strip()
         owner = self.owner_edit.text().strip()
+        server = self.server_combo.currentText()
         
         # Validate login
         valid, msg = validate_login(login)
@@ -119,7 +127,8 @@ class AccountDialog(QDialog):
         for value, validator, field_name in [
             (character, validate_character_name, "Character Name"),
             (description, validate_description, "Description"),
-            (owner, validate_owner, "Owner")
+            (owner, validate_owner, "Owner"),
+            (server, validate_server, "Server")
         ]:
             valid, msg = validator(value)
             if not valid:
@@ -127,7 +136,7 @@ class AccountDialog(QDialog):
                 return
         
         # Create account object
-        self.account = Account(login, password, character, description, owner)
+        self.account = Account(login, password, character, description, owner, server)
         self.accept()
     
     def get_account(self):

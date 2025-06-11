@@ -119,7 +119,7 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         
         # Set columns
-        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Actions"]
+        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
         self.table.setColumnCount(len(columns))
         self.table.setHorizontalHeaderLabels(columns)
         
@@ -136,7 +136,8 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(3, QHeaderView.Stretch)  # Character
         header.setSectionResizeMode(4, QHeaderView.Stretch)  # Description
         header.setSectionResizeMode(5, QHeaderView.Stretch)  # Owner
-        header.resizeSection(6, 120)  # Actions
+        header.resizeSection(6, 60)  # Server
+        header.resizeSection(7, 120)  # Actions
     
     def load_accounts(self):
         """Load accounts into the table"""
@@ -183,6 +184,10 @@ class MainWindow(QMainWindow):
         # Owner
         self.table.setItem(row, 5, QTableWidgetItem(account.owner))
         
+        # Server
+        server_value = getattr(account, 'server', 'Main')
+        self.table.setItem(row, 6, QTableWidgetItem(server_value))
+        
         # Actions
         actions_widget = QWidget()
         actions_layout = QHBoxLayout()
@@ -220,7 +225,7 @@ class MainWindow(QMainWindow):
         actions_layout.addWidget(menu_btn)
         
         actions_widget.setLayout(actions_layout)
-        self.table.setCellWidget(row, 6, actions_widget)
+        self.table.setCellWidget(row, 7, actions_widget)
         
         # Store account reference
         self.table.item(row, 1).setData(Qt.UserRole, account)
@@ -279,6 +284,7 @@ class MainWindow(QMainWindow):
                 self.table.item(row, 3).setText(new_account.character_name)
                 self.table.item(row, 4).setText(new_account.description)
                 self.table.item(row, 5).setText(new_account.owner)
+                self.table.item(row, 6).setText(getattr(new_account, 'server', 'Main'))
     
     def delete_account(self, row):
         """Delete an account"""
@@ -461,7 +467,8 @@ class MainWindow(QMainWindow):
                 password=acc_data['password'],
                 character_name=acc_data.get('character_name', ''),
                 description=acc_data.get('description', ''),
-                owner=acc_data.get('owner', '')
+                owner=acc_data.get('owner', ''),
+                server=acc_data.get('server', 'Main')
             )
             
             if self.account_manager.add_account(account):

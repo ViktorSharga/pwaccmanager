@@ -58,3 +58,12 @@ def validate_owner(owner: str) -> tuple[bool, str]:
         return False, "Owner name is too long (max 50 characters)"
     
     return True, ""
+
+
+def validate_server(server: str) -> tuple[bool, str]:
+    """Validate server field"""
+    valid_servers = ["X", "Main"]
+    if server not in valid_servers:
+        return False, f"Server must be one of: {', '.join(valid_servers)}"
+    
+    return True, ""
