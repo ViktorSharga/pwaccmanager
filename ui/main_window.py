@@ -5,9 +5,9 @@ from functools import partial
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QHeaderView, QMessageBox, QStatusBar, QMenu,
-                             QCheckBox, QToolBar, QStyle)
+                             QCheckBox, QToolBar, QStyle, QApplication)
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QCursor
 
 from core.account_manager import AccountManager, Account
 from core.settings_manager import SettingsManager
@@ -128,6 +128,22 @@ class MainWindow(QMainWindow):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSortingEnabled(True)
         
+        # Disable editing for all items
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        
+        # Connect cell click events for clipboard copy
+        self.table.cellClicked.connect(self.on_table_cell_clicked)
+        
+        # Add styling for the table
+        self.table.setStyleSheet("""
+            QTableWidget::item {
+                padding: 5px;
+            }
+            QTableWidget::item:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        
         # Set column widths
         header = self.table.horizontalHeader()
         header.resizeSection(0, 30)  # Checkbox column
@@ -167,12 +183,17 @@ class MainWindow(QMainWindow):
         checkbox_widget.setLayout(checkbox_layout)
         self.table.setCellWidget(row, 0, checkbox_widget)
         
-        # Login
-        self.table.setItem(row, 1, QTableWidgetItem(account.login))
+        # Login (clickable for clipboard copy)
+        login_item = QTableWidgetItem(account.login)
+        login_item.setToolTip("Click to copy login to clipboard")
+        login_item.setData(Qt.UserRole + 1, "login")  # Mark as login field
+        self.table.setItem(row, 1, login_item)
         
-        # Password (masked)
+        # Password (masked, clickable for clipboard copy)
         password_item = QTableWidgetItem("••••••")
         password_item.setData(Qt.UserRole, account.password)
+        password_item.setData(Qt.UserRole + 1, "password")  # Mark as password field
+        password_item.setToolTip("Click to copy password to clipboard")
         self.table.setItem(row, 2, password_item)
         
         # Character name
@@ -516,6 +537,34 @@ class MainWindow(QMainWindow):
         else:
             # Could add error notification here
             pass
+    
+    def on_table_cell_clicked(self, row, column):
+        """Handle table cell clicks for clipboard copy functionality"""
+        if column == 1 or column == 2:  # Login or Password columns
+            item = self.table.item(row, column)
+            if item:
+                field_type = item.data(Qt.UserRole + 1)
+                if field_type == "login":
+                    # Copy login to clipboard
+                    text_to_copy = item.text()
+                    self.copy_to_clipboard(text_to_copy, "Login")
+                elif field_type == "password":
+                    # Copy password to clipboard
+                    password = item.data(Qt.UserRole)
+                    self.copy_to_clipboard(password, "Password")
+    
+    def copy_to_clipboard(self, text, field_name):
+        """Copy text to clipboard with user feedback"""
+        try:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(text)
+            
+            # Show temporary feedback
+            self.status_bar.showMessage(f"{field_name} copied to clipboard", 2000)
+            
+        except Exception as e:
+            QMessageBox.warning(self, "Clipboard Error", 
+                              f"Failed to copy {field_name.lower()} to clipboard: {e}")
     
     def cleanup_processes(self):
         """Clean up dead processes"""
