@@ -372,7 +372,8 @@ class MainWindow(QMainWindow):
                                   "Please select accounts to launch.")
             return
         
-        launched = 0
+        # Prepare launch data for queuing
+        launch_data = []
         for row in selected_rows:
             login_item = self.table.item(row, 1)
             if login_item:
@@ -385,13 +386,22 @@ class MainWindow(QMainWindow):
                     )
                     
                     if batch_file:
-                        pid = self.game_launcher.launch_account(account.login, batch_file)
-                        if pid:
-                            self.update_row_status(row, True)
-                            launched += 1
+                        launch_data.append((account.login, batch_file, row))
         
-        QMessageBox.information(self, "Launch Complete", 
-                              f"Launched {launched} account(s).")
+        if not launch_data:
+            QMessageBox.information(self, "Nothing to Launch", 
+                                  "No accounts need to be launched (already running or errors).")
+            return
+        
+        # Queue all launches with callback
+        queued = 0
+        for login, batch_file, row in launch_data:
+            callback = partial(self._launch_callback, row)
+            self.game_launcher.queue_launch(login, batch_file, callback)
+            queued += 1
+        
+        QMessageBox.information(self, "Launch Queued", 
+                              f"Queued {queued} account(s) for launch with delay.")
     
     def close_selected(self):
         """Close all selected accounts"""
@@ -486,6 +496,15 @@ class MainWindow(QMainWindow):
         # Could add visual indicators here (e.g., background color)
         pass
     
+    def _launch_callback(self, row, login, pid):
+        """Callback for queued launch completion"""
+        if pid:
+            self.update_row_status(row, True)
+            # Could add status notification here
+        else:
+            # Could add error notification here
+            pass
+    
     def cleanup_processes(self):
         """Clean up dead processes"""
         if self.game_launcher:
@@ -534,5 +553,8 @@ class MainWindow(QMainWindow):
                     return
                 elif reply == QMessageBox.Yes:
                     self.game_launcher.terminate_all()
+            
+            # Shutdown the launch queue worker
+            self.game_launcher.shutdown()
         
         event.accept()
