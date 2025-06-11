@@ -4,10 +4,13 @@ import json
 import os
 from pathlib import Path
 
+from utils.app_paths import get_settings_file_path, ensure_data_dir_exists
+
 
 class SettingsManager:
     def __init__(self):
-        self.settings_file = Path("settings.json")
+        ensure_data_dir_exists()
+        self.settings_file = get_settings_file_path()
         self.settings = self.load_settings()
     
     def load_settings(self):

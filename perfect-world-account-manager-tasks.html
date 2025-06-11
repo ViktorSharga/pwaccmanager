@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect World Account Manager - Bug Fix and Enhancement Tasks</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        
+        h1 {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        
+        .task {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .task.critical {
+            border-left-color: #e74c3c;
+        }
+        
+        .task.high {
+            border-left-color: #f39c12;
+        }
+        
+        .task.medium {
+            border-left-color: #3498db;
+        }
+        
+        .task.low {
+            border-left-color: #95a5a6;
+        }
+        
+        .priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+        
+        .priority.critical {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .priority.high {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .priority.medium {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .priority.low {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .overview {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .overview dl {
+            margin: 0;
+        }
+        
+        .overview dt {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 10px;
+        }
+        
+        .overview dd {
+            margin-left: 0;
+            margin-bottom: 10px;
+        }
+        
+        ul, ol {
+            margin-bottom: 1em;
+        }
+        
+        li {
+            margin-bottom: 0.5em;
+        }
+        
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+        
+        pre code {
+            background-color: transparent;
+            color: #ecf0f1;
+            padding: 0;
+        }
+        
+        .technical-details {
+            background-color: #f8f9fa;
+            border-left: 3px solid #6c757d;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .requirements {
+            background-color: #e3f2fd;
+            border-left: 3px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .expected-outcome {
+            background-color: #e8f5e9;
+            border-left: 3px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .phase {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .json-example {
+            background-color: #282c34;
+            color: #abb2bf;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .nav {
+            position: sticky;
+            top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .nav h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        
+        .nav ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .nav li {
+            margin-bottom: 8px;
+        }
+        
+        .nav a {
+            color: #3498db;
+            text-decoration: none;
+            display: block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .nav a:hover {
+            background-color: #ecf0f1;
+        }
+        
+        .container {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .content {
+            flex: 1;
+        }
+        
+        .sidebar {
+            flex: 0 0 300px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .nav {
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Perfect World Account Manager</h1>
+    <h2>Bug Fix and Enhancement Tasks for AI Coding Agent</h2>
+    
+    <div class="overview">
+        <h3>Project Overview</h3>
+        <dl>
+            <dt>Application:</dt>
+            <dd>Perfect World Account Manager</dd>
+            
+            <dt>Current State:</dt>
+            <dd>Functional but with several critical issues and UI/UX improvements needed</dd>
+            
+            <dt>Target:</dt>
+            <dd>Stable, user-friendly account management tool with modern interface</dd>
+            
+            <dt>Priority:</dt>
+            <dd>High - Application has core functionality issues affecting user experience</dd>
+        </dl>
+    </div>
+
+    <div class="container">
+        <main class="content">
+            <section id="critical-bugs">
+                <h2>🔥 Critical Bug Fixes</h2>
+                
+                <div class="task critical" id="task1">
+                    <h3>Task 1: Settings Persistence in Standalone EXE</h3>
+                    <span class="priority critical">CRITICAL</span>
+                    
+                    <p><strong>Issue:</strong> When application is compiled as standalone .exe file, settings are not being saved/loaded properly.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Settings likely not persisting due to file path issues in compiled environment</li>
+                            <li>May be trying to write to protected directories or incorrect relative paths</li>
+                            <li>Need to implement proper data directory detection for executable vs development environment</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Detect if running from .exe or development environment</li>
+                            <li>Use appropriate data storage location (AppData/Documents for .exe)</li>
+                            <li>Implement fallback mechanism for settings storage</li>
+                            <li>Test settings persistence across application restarts in compiled form</li>
+                            <li>Ensure configuration files are created with proper permissions</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Settings save and load correctly in both development and compiled .exe versions</p>
+                    </div>
+                </div>
+
+                <div class="task high" id="task2">
+                    <h3>Task 2: Three Dots Menu Functionality</h3>
+                    <span class="priority high">HIGH</span>
+                    
+                    <p><strong>Issue:</strong> Context menu (three dots menu) is not responding to user interactions.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Menu appears to be rendered but click events not properly handled</li>
+                            <li>Could be z-index issues, event propagation problems, or missing event handlers</li>
+                            <li>May need to check if menu is properly positioned and accessible</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Debug menu click event handlers</li>
+                            <li>Verify menu positioning and visibility</li>
+                            <li>Check for conflicting event listeners</li>
+                            <li>Ensure proper menu item functionality</li>
+                            <li>Test menu behavior across different screen resolutions</li>
+                            <li>Implement proper menu dismissal on outside clicks</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Three dots menu fully functional with all menu items working correctly</p>
+                    </div>
+                </div>
+
+                <div class="task high" id="task3">
+                    <h3>Task 3: Process Launch Delay Management</h3>
+                    <span class="priority high">HIGH</span>
+                    
+                    <p><strong>Issue:</strong> When launching multiple game windows simultaneously, process IDs are not being saved correctly due to race conditions.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Concurrent launches causing process tracking conflicts</li>
+                            <li>Need sequential launching with proper delays</li>
+                            <li>Process ID assignment getting mixed up between instances</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Implement queue-based launching system</li>
+                            <li>Add configurable delay between consecutive launches</li>
+                            <li>Ensure each process is fully started before launching next</li>
+                            <li>Implement proper process ID tracking and assignment</li>
+                            <li>Add launch status feedback to user</li>
+                            <li>Handle launch failures gracefully without affecting other launches</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Multiple account launches work reliably with correct process tracking</p>
+                    </div>
+                </div>
+
+                <div class="task high" id="task10">
+                    <h3>Task 10: Fix Table Field Editing and Implement Clipboard Copy</h3>
+                    <span class="priority high">HIGH</span>
+                    
+                    <p><strong>Issue:</strong> Table fields incorrectly enter edit mode without saving changes, and login/password fields need clipboard copy functionality instead of editing.</p>
+                    
+                    <h4>Problem 1: Disable Table Field Editing</h4>
+                    <div class="technical-details">
+                        <h5>Current Behavior:</h5>
+                        <ul>
+                            <li>Clicking on table fields triggers edit mode</li>
+                            <li>Changes made in edit mode are not saved to data</li>
+                            <li>Creates confusing user experience with non-functional editing</li>
+                        </ul>
+                        
+                        <h5>Technical Requirements:</h5>
+                        <ul>
+                            <li>Disable inline editing for all text fields in the table</li>
+                            <li>Remove edit mode styling and cursor changes</li>
+                            <li>Ensure table cells are read-only and non-interactive for text content</li>
+                            <li>Maintain proper visual styling for non-editable cells</li>
+                            <li>Keep existing selection functionality for rows (checkboxes should still work)</li>
+                        </ul>
+                        
+                        <h5>Implementation Details:</h5>
+                        <ul>
+                            <li>Remove or disable contentEditable attributes from table cells</li>
+                            <li>Update CSS to remove text cursor (cursor: default instead of cursor: text)</li>
+                            <li>Remove any event handlers that trigger edit mode</li>
+                            <li>Ensure proper styling for read-only table cells</li>
+                        </ul>
+                    </div>
+                    
+                    <h4>Problem 2: Clipboard Copy for Login/Password Fields</h4>
+                    <div class="requirements">
+                        <h5>New Behavior Requirements:</h5>
+                        <ul>
+                            <li>Click on Login field → Copy login/username to clipboard</li>
+                            <li>Click on Password field → Copy password to clipboard</li>
+                            <li>Show visual feedback when copy operation succeeds</li>
+                            <li>Handle copy operation failures gracefully</li>
+                            <li>Add hover indicators to show fields are clickable for copying</li>
+                        </ul>
+                        
+                        <h5>Technical Implementation:</h5>
+                        <ul>
+                            <li>Implement clipboard copy functionality using navigator.clipboard.writeText()</li>
+                            <li>Add fallback for older browsers using document.execCommand('copy')</li>
+                            <li>Create click event handlers specifically for Login and Password columns</li>
+                            <li>Add visual feedback (toast notification, temporary highlight, or tooltip)</li>
+                            <li>Implement proper error handling for clipboard access failures</li>
+                            <li>Add hover styling to indicate clickable fields</li>
+                        </ul>
+                        
+                        <h5>User Experience Enhancements:</h5>
+                        <ul>
+                            <li>Add subtle hover effects on Login/Password fields</li>
+                            <li>Show temporary "Copied!" message or icon</li>
+                            <li>Use appropriate cursor style (cursor: pointer) for copy-enabled fields</li>
+                            <li>Consider adding small copy icon overlay on hover</li>
+                            <li>Ensure accessibility with proper ARIA labels</li>
+                        </ul>
+                        
+                        <h5>Security Considerations:</h5>
+                        <ul>
+                            <li>Ensure clipboard copy works only for visible data</li>
+                            <li>Handle password visibility settings appropriately</li>
+                            <li>Add user permission handling for clipboard access</li>
+                            <li>Consider adding confirmation for password copying (optional)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <ul>
+                            <li>Table provides clean, read-only display of account data</li>
+                            <li>Login and password fields provide one-click copying to clipboard</li>
+                            <li>Clear visual feedback for copy operations</li>
+                            <li>Improved user workflow for credential management</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="feature-enhancements">
+                <h2>⚡ Feature Enhancements</h2>
+                
+                <div class="task medium" id="task4">
+                    <h3>Task 4: Configurable Launch Timing Settings</h3>
+                    <span class="priority medium">MEDIUM</span>
+                    
+                    <p><strong>Issue:</strong> Users need ability to customize timing between launches for their system performance.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Add settings option for launch delay configuration</li>
+                            <li>Should integrate with Task 3's delay system</li>
+                            <li>Need intuitive UI for timing configuration</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Add "Launch Delay" setting in Settings panel</li>
+                            <li>Implement slider or input field (range: 1-30 seconds)</li>
+                            <li>Set reasonable default value (3-5 seconds)</li>
+                            <li>Apply delay setting to launch queue system</li>
+                            <li>Add setting description/tooltip for user guidance</li>
+                            <li>Validate input ranges and handle edge cases</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Users can customize launch delays based on their system capabilities</p>
+                    </div>
+                </div>
+
+                <div class="task low" id="task5">
+                    <h3>Task 5: Game Window Name Update</h3>
+                    <span class="priority low">LOW</span>
+                    
+                    <p><strong>Issue:</strong> Application needs to recognize game windows with name "Asgard Perfect World".</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Update window detection logic to match correct game window title</li>
+                            <li>May affect process tracking and window management features</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Update window title detection from current name to "Asgard Perfect World"</li>
+                            <li>Test window detection and focusing functionality</li>
+                            <li>Update any hardcoded window name references</li>
+                            <li>Ensure process-to-window mapping works correctly</li>
+                            <li>Verify window management features still function</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Application correctly identifies and manages "Asgard Perfect World" game windows</p>
+                    </div>
+                </div>
+
+                <div class="task medium" id="task6">
+                    <h3>Task 6: Server Selection Field Enhancement</h3>
+                    <span class="priority medium">MEDIUM</span>
+                    
+                    <p><strong>Issue:</strong> Need additional data field for server selection to improve account organization.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Add new dropdown field to account entities</li>
+                            <li>Integrate with existing data model and storage</li>
+                            <li>Update UI to accommodate new field</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Add "Server" field to account data model</li>
+                            <li>Create dropdown component with options: "X" and "Main"</li>
+                            <li>Update database/storage schema to include server field</li>
+                            <li>Implement data migration for existing accounts</li>
+                            <li>Add server field to Add/Edit account dialogs</li>
+                            <li>Update account display to show server information</li>
+                            <li>Set appropriate default value for new accounts</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Users can categorize accounts by server (X or Main) for better organization</p>
+                    </div>
+                </div>
+
+                <div class="task medium" id="task8">
+                    <h3>Task 8: Table Header Select/Unselect All Functionality</h3>
+                    <span class="priority medium">MEDIUM</span>
+                    
+                    <p><strong>Issue:</strong> Users need ability to quickly select or unselect all accounts in the table for bulk operations.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Add checkbox in table header row</li>
+                            <li>Implement tri-state checkbox logic (unchecked, checked, indeterminate)</li>
+                            <li>Connect to existing row selection system</li>
+                            <li>Update selection state management</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Requirements:</h4>
+                        <ul>
+                            <li>Add master checkbox to table header</li>
+                            <li>Implement select all functionality when master checkbox is checked</li>
+                            <li>Implement unselect all functionality when master checkbox is unchecked</li>
+                            <li>Handle indeterminate state when some (but not all) rows are selected</li>
+                            <li>Update master checkbox state when individual row selections change</li>
+                            <li>Ensure proper styling and visual feedback for all checkbox states</li>
+                            <li>Test with large numbers of accounts for performance</li>
+                            <li>Update existing bulk operations to work with select all functionality</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Users can efficiently select/unselect all accounts with a single click, with clear visual indication of selection states</p>
+                    </div>
+                </div>
+
+                <div class="task medium" id="task9">
+                    <h3>Task 9: Import/Export JSON Functionality</h3>
+                    <span class="priority medium">MEDIUM</span>
+                    
+                    <p><strong>Issue:</strong> Users need ability to backup and transfer account data between installations or share configurations.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Implement secure JSON export with optional data encryption</li>
+                            <li>Create import system with validation and conflict resolution</li>
+                            <li>Allow selective export of specific accounts</li>
+                            <li>Ensure data integrity and backward compatibility</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Export Functionality:</h4>
+                        <ul>
+                            <li>Add "Export" button/menu option in main interface</li>
+                            <li>Create export dialog with account selection options</li>
+                            <li>Implement "Export All" option for complete data backup</li>
+                            <li>Implement "Export Selected" option for partial exports</li>
+                            <li>Generate JSON with proper data structure and formatting</li>
+                            <li>Include metadata (export date, version, account count)</li>
+                            <li>Add option to exclude sensitive data (passwords) from export</li>
+                            <li>Implement file save dialog with suggested filename format</li>
+                            <li>Add progress indicator for large exports</li>
+                        </ul>
+                        
+                        <h4>Import Functionality:</h4>
+                        <ul>
+                            <li>Add "Import" button/menu option in main interface</li>
+                            <li>Create file selection dialog for JSON import</li>
+                            <li>Implement JSON validation and error handling</li>
+                            <li>Add import preview showing accounts to be imported</li>
+                            <li>Handle duplicate account detection and resolution options</li>
+                            <li>Provide merge strategies: skip duplicates, overwrite, or create new</li>
+                            <li>Add import progress indicator and status feedback</li>
+                            <li>Implement rollback capability in case of import errors</li>
+                            <li>Validate data integrity and format compatibility</li>
+                        </ul>
+                        
+                        <h4>JSON Structure Specification:</h4>
+                        <div class="json-example">
+<pre>{
+  "metadata": {
+    "version": "1.0",
+    "exportDate": "2025-06-12T10:30:00Z",
+    "accountCount": 5,
+    "encrypted": false
+  },
+  "accounts": [
+    {
+      "login": "username1",
+      "password": "encrypted_or_excluded",
+      "characterName": "CharName",
+      "description": "Account description",
+      "owner": "Player1",
+      "server": "Main"
+    }
+  ]
+}</pre>
+                        </div>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Users can easily backup, transfer, and share account configurations with flexible export options and safe import with validation</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="ui-improvements">
+                <h2>🎨 UI/UX Improvements</h2>
+                
+                <div class="task high" id="task7">
+                    <h3>Task 7: Modern UI Design Overhaul</h3>
+                    <span class="priority high">HIGH</span>
+                    
+                    <p><strong>Issue:</strong> Current interface appears dark, blank, and unfriendly. Needs complete design modernization.</p>
+                    
+                    <div class="technical-details">
+                        <h4>Technical Details:</h4>
+                        <ul>
+                            <li>Current dark theme lacks visual hierarchy and modern styling</li>
+                            <li>Interface appears empty and uninviting</li>
+                            <li>Need comprehensive design system implementation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="requirements">
+                        <h4>Design Requirements:</h4>
+                        
+                        <h5>Color Scheme:</h5>
+                        <ul>
+                            <li>Implement modern, accessible color palette</li>
+                            <li>Light theme as default with optional dark theme</li>
+                            <li>Proper contrast ratios for accessibility</li>
+                            <li>Consistent color usage across components</li>
+                        </ul>
+                        
+                        <h5>Layout Improvements:</h5>
+                        <ul>
+                            <li>Add proper spacing and padding throughout interface</li>
+                            <li>Implement card-based design for account entries</li>
+                            <li>Create clear visual hierarchy with typography</li>
+                            <li>Add appropriate icons and visual elements</li>
+                            <li>Implement responsive layout principles</li>
+                        </ul>
+                        
+                        <h5>Component Enhancements:</h5>
+                        <ul>
+                            <li>Style buttons with modern hover and active states</li>
+                            <li>Improve form inputs with proper styling and validation feedback</li>
+                            <li>Add loading states and progress indicators</li>
+                            <li>Implement proper dropdown and menu styling</li>
+                            <li>Create consistent spacing system</li>
+                        </ul>
+                        
+                        <h5>User Experience:</h5>
+                        <ul>
+                            <li>Add welcome/empty state when no accounts are loaded</li>
+                            <li>Implement proper error and success messaging</li>
+                            <li>Add tooltips and help text where appropriate</li>
+                            <li>Create intuitive navigation and information architecture</li>
+                            <li>Add confirmation dialogs for destructive actions</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="expected-outcome">
+                        <h4>Expected Outcome:</h4>
+                        <p>Modern, user-friendly interface that feels professional and intuitive</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="implementation">
+                <h2>📋 Implementation Guidelines</h2>
+                
+                <div class="phase">
+                    <h3>Phase 1: Critical Fixes (Priority: CRITICAL/HIGH)</h3>
+                    <p><strong>Tasks:</strong> 1, 2, 3, 7, 10</p>
+                    <p><strong>Timeline:</strong> Complete critical bugs and basic UI improvements</p>
+                </div>
+                
+                <div class="phase">
+                    <h3>Phase 2: Feature Enhancements (Priority: MEDIUM)</h3>
+                    <p><strong>Tasks:</strong> 4, 6, 8, 9</p>
+                    <p><strong>Timeline:</strong> Add new features, data management, and configuration options</p>
+                </div>
+                
+                <div class="phase">
+                    <h3>Phase 3: Polish and Optimization (Priority: LOW)</h3>
+                    <p><strong>Tasks:</strong> 5, Testing, Documentation</p>
+                    <p><strong>Timeline:</strong> Final optimizations and comprehensive testing</p>
+                </div>
+                
+                <h3>Development Standards:</h3>
+                <ul>
+                    <li>Follow existing code architecture and patterns</li>
+                    <li>Maintain backward compatibility where possible</li>
+                    <li>Implement proper error handling and logging</li>
+                    <li>Use consistent naming conventions</li>
+                    <li>Add appropriate code documentation</li>
+                </ul>
+                
+                <h3>Technical Considerations:</h3>
+                <ul>
+                    <li><strong>Framework:</strong> Maintain current technology stack</li>
+                    <li><strong>Performance:</strong> Ensure changes don't impact application performance</li>
+                    <li><strong>Security:</strong> Validate all user inputs and handle sensitive data appropriately</li>
+                    <li><strong>Compatibility:</strong> Test on Windows 10/11 environments</li>
+                    <li><strong>Packaging:</strong> Verify all changes work in compiled .exe format</li>
+                </ul>
+                
+                <h3>Testing Requirements:</h3>
+                <ul>
+                    <li>Unit tests for core functionality</li>
+                    <li>Integration tests for cross-component features</li>
+                    <li>Manual testing across different Windows versions</li>
+                    <li>Performance testing with multiple accounts</li>
+                    <li>Accessibility testing for UI improvements</li>
+                    <li>User acceptance testing for design changes</li>
+                </ul>
+            </section>
+
+            <section id="deliverables">
+                <h2>📦 Final Deliverables</h2>
+                <ul>
+                    <li>Updated source code with all fixes implemented</li>
+                    <li>Compiled .exe file ready for distribution</li>
+                    <li>Updated documentation and user guide</li>
+                    <li>Test results and validation reports</li>
+                    <li>Migration guide for existing users</li>
+                </ul>
+            </section>
+
+            <section id="additional-notes">
+                <h2>📝 Additional Notes</h2>
+                
+                <h3>Known Technical Constraints:</h3>
+                <ul>
+                    <li>Must maintain compatibility with existing account data</li>
+                    <li>Cannot break existing user workflows</li>
+                    <li>Need to preserve current feature set while improving</li>
+                </ul>
+                
+                <h3>User Impact Considerations:</h3>
+                <ul>
+                    <li>Minimize disruption to existing users</li>
+                    <li>Provide clear upgrade path</li>
+                    <li>Maintain familiar functionality while improving experience</li>
+                </ul>
+                
+                <h3>Success Criteria:</h3>
+                <ul>
+                    <li>All critical bugs resolved</li>
+                    <li>Significantly improved user experience</li>
+                    <li>Stable performance with multiple accounts</li>
+                    <li>Positive user feedback on design improvements</li>
+                    <li>Successful deployment as standalone executable</li>
+                    <li>Efficient bulk account management capabilities</li>
+                    <li>Reliable data backup and transfer functionality</li>
+                </ul>
+            </section>
+        </main>
+        
+        <aside class="sidebar">
+            <nav class="nav">
+                <h3>Quick Navigation</h3>
+                <ul>
+                    <li><a href="#critical-bugs">🔥 Critical Bug Fixes</a>
+                        <ul>
+                            <li><a href="#task1">Task 1: Settings Persistence</a></li>
+                            <li><a href="#task2">Task 2: Three Dots Menu</a></li>
+                            <li><a href="#task3">Task 3: Process Launch Delay</a></li>
+                            <li><a href="#task10">Task 10: Table Field Editing</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#feature-enhancements">⚡ Feature Enhancements</a>
+                        <ul>
+                            <li><a href="#task4">Task 4: Launch Timing Settings</a></li>
+                            <li><a href="#task5">Task 5: Game Window Name</a></li>
+                            <li><a href="#task6">Task 6: Server Selection Field</a></li>
+                            <li><a href="#task8">Task 8: Select All Functionality</a></li>
+                            <li><a href="#task9">Task 9: Import/Export JSON</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#ui-improvements">🎨 UI/UX Improvements</a>
+                        <ul>
+                            <li><a href="#task7">Task 7: Modern UI Design</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#implementation">📋 Implementation Guidelines</a></li>
+                    <li><a href="#deliverables">📦 Final Deliverables</a></li>
+                    <li><a href="#additional-notes">📝 Additional Notes</a></li>
+                </ul>
+            </nav>
+        </aside>
+    </div>
+    
+    <footer style="margin-top: 50px; text-align: center; color: #7f8c8d; padding: 20px; border-top: 1px solid #ecf0f1;">
+        <p>Document Version: 1.1<br>
+        Created: June 2025<br>
+        Last Updated: June 2025<br>
+        Status: Ready for Implementation</p>
+    </footer>
+</body>
+</html>

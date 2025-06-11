@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from typing import List, Dict, Optional
 
+from utils.app_paths import get_accounts_file_path, ensure_data_dir_exists
+
 
 class Account:
     def __init__(self, login: str, password: str, character_name: str = "", 
@@ -40,7 +42,8 @@ class Account:
 
 class AccountManager:
     def __init__(self):
-        self.accounts_file = Path("accounts.json")
+        ensure_data_dir_exists()
+        self.accounts_file = get_accounts_file_path()
         self.accounts: List[Account] = []
         self.load_accounts()
     
