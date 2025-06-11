@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect World Account Manager - Implementation Guide</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #7f8c8d;
+            margin-top: 30px;
+        }
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        .file-header {
+            background: #3498db;
+            color: white;
+            padding: 10px 15px;
+            margin: 30px 0 0 0;
+            border-radius: 4px 4px 0 0;
+            font-weight: bold;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        .file-content {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-top: none;
+            margin: 0 0 30px 0;
+            padding: 15px;
+            border-radius: 0 0 4px 4px;
+            overflow-x: auto;
+        }
+        .instruction-box {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        ul {
+            padding-left: 30px;
+        }
+        li {
+            margin: 5px 0;
+        }
+        @media print {
+            body {
+                max-width: 100%;
+                margin: 0;
+                padding: 20px;
+            }
+            .file-header {
+                page-break-after: avoid;
+            }
+            pre {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Perfect World Account Manager - Complete Implementation Guide</h1>
+    
+    <div class="instruction-box">
+        <h3>Instructions for AI Coding Assistants</h3>
+        <p>This document contains the complete source code for a Perfect World Account Manager application. To implement:</p>
+        <ol>
+            <li>Create the project directory structure as shown below</li>
+            <li>Create each file with the exact content provided</li>
+            <li>Empty <code>__init__.py</code> files should be created in <code>ui/</code>, <code>core/</code>, and <code>utils/</code> directories</li>
+            <li>The application requires Python 3.8+ on Windows</li>
+            <li>Dependencies: PySide6 and psutil (install via pip)</li>
+        </ol>
+    </div>
+
+    <h2>Project Overview</h2>
+    <p>A Windows desktop application for managing Perfect World game accounts with features including:</p>
+    <ul>
+        <li>Account CRUD operations with unique login validation</li>
+        <li>Multi-client launching with process tracking</li>
+        <li>Batch file generation for game client startup</li>
+        <li>Folder scanning to import existing accounts</li>
+        <li>PySide6-based GUI with table view and toolbar</li>
+    </ul>
+
+    <h2>Project Structure</h2>
+    <pre>perfect_world_account_manager/
+│
+├── main.py                    # Application entry point
+├── requirements.txt           # Python dependencies
+├── settings.json             # Application settings (auto-generated)
+├── accounts.json             # Account data storage (auto-generated)
+│
+├── ui/
+│   ├── __init__.py           # Empty file
+│   ├── main_window.py        # Main application window
+│   └── dialogs.py            # Add/Edit account dialogs, Settings dialog
+│
+├── core/
+│   ├── __init__.py           # Empty file
+│   ├── account_manager.py    # Account CRUD operations
+│   ├── game_launcher.py      # Game launching and process management
+│   ├── batch_generator.py    # Batch file generation and parsing
+│   └── settings_manager.py   # Settings persistence
+│
+└── utils/
+    ├── __init__.py           # Empty file
+    └── validators.py         # Input validation utilities</pre>
+
+    <h2>Implementation Files</h2>
+
+    <div class="file-header">requirements.txt</div>
+    <div class="file-content"><pre>PySide6>=6.5.0
+psutil>=5.9.0</pre></div>
+
+    <div class="file-header">main.py</div>
+    <div class="file-content"><pre>#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Perfect World Account Manager
+Main entry point for the application
+"""
+
+import sys
+import os
+from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import Qt
+
+# Add the project root to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from ui.main_window import MainWindow
+
+
+def main():
+    # Enable high DPI scaling on Windows
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+    )
+    
+    app = QApplication(sys.argv)
+    app.setApplicationName("Perfect World Account Manager")
+    app.setOrganizationName("PWManager")
+    
+    # Create and show main window
+    window = MainWindow()
+    window.show()
+    
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()</pre></div>
+
+    <div class="file-header">core/settings_manager.py</div>
+    <div class="file-content"><pre>"""Settings management module"""
+
+import json
+import os
+from pathlib import Path
+
+
+class SettingsManager:
+    def __init__(self):
+        self.settings_file = Path("settings.json")
+        self.settings = self.load_settings()
+    
+    def load_settings(self):
+        """Load settings from file or create default settings"""
+        if self.settings_file.exists():
+            try:
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        
+        # Default settings
+        return {
+            "game_folder": "",
+            "window_geometry": None
+        }
+    
+    def save_settings(self):
+        """Save current settings to file"""
+        try:
+            with open(self.settings_file, 'w', encoding='utf-8') as f:
+                json.dump(self.settings, f, indent=2)
+            return True
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+            return False
+    
+    def get_game_folder(self):
+        """Get the game folder path"""
+        return self.settings.get("game_folder", "")
+    
+    def set_game_folder(self, path):
+        """Set the game folder path"""
+        self.settings["game_folder"] = path
+        self.save_settings()
+    
+    def is_valid_game_folder(self, path):
+        """Check if the folder contains elementclient.exe"""
+        if not path or not os.path.exists(path):
+            return False
+        
+        exe_path = os.path.join(path, "elementclient.exe")
+        return os.path.exists(exe_path)
+    
+    def get_window_geometry(self):
+        """Get saved window geometry"""
+        return self.settings.get("window_geometry")
+    
+    def set_window_geometry(self, geometry):
+        """Save window geometry"""
+        self.settings["window_geometry"] = geometry
+        self.save_settings()</pre></div>
+
+    <div class="file-header">core/account_manager.py</div>
+    <div class="file-content"><pre>"""Account management module"""
+
+import json
+import os
+from pathlib import Path
+from typing import List, Dict, Optional
+
+
+class Account:
+    def __init__(self, login: str, password: str, character_name: str = "", 
+                 description: str = "", owner: str = ""):
+        self.login = login
+        self.password = password
+        self.character_name = character_name
+        self.description = description
+        self.owner = owner
+        self.pid = None  # Process ID when running
+    
+    def to_dict(self):
+        """Convert account to dictionary"""
+        return {
+            "login": self.login,
+            "password": self.password,
+            "character_name": self.character_name,
+            "description": self.description,
+            "owner": self.owner
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create account from dictionary"""
+        return cls(
+            login=data.get("login", ""),
+            password=data.get("password", ""),
+            character_name=data.get("character_name", ""),
+            description=data.get("description", ""),
+            owner=data.get("owner", "")
+        )
+
+
+class AccountManager:
+    def __init__(self):
+        self.accounts_file = Path("accounts.json")
+        self.accounts: List[Account] = []
+        self.load_accounts()
+    
+    def load_accounts(self):
+        """Load accounts from file"""
+        if self.accounts_file.exists():
+            try:
+                with open(self.accounts_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.accounts = [Account.from_dict(acc) for acc in data]
+            except Exception as e:
+                print(f"Error loading accounts: {e}")
+                self.accounts = []
+        else:
+            self.accounts = []
+    
+    def save_accounts(self):
+        """Save accounts to file"""
+        try:
+            data = [acc.to_dict() for acc in self.accounts]
+            with open(self.accounts_file, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+            return True
+        except Exception as e:
+            print(f"Error saving accounts: {e}")
+            return False
+    
+    def add_account(self, account: Account) -> bool:
+        """Add a new account"""
+        # Check for duplicate login
+        if any(acc.login == account.login for acc in self.accounts):
+            return False
+        
+        self.accounts.append(account)
+        self.save_accounts()
+        return True
+    
+    def update_account(self, old_login: str, account: Account) -> bool:
+        """Update an existing account"""
+        # Find the account to update
+        for i, acc in enumerate(self.accounts):
+            if acc.login == old_login:
+                # Check for duplicate login (if login changed)
+                if old_login != account.login:
+                    if any(a.login == account.login for a in self.accounts):
+                        return False
+                
+                self.accounts[i] = account
+                self.save_accounts()
+                return True
+        return False
+    
+    def delete_account(self, login: str) -> bool:
+        """Delete an account by login"""
+        for i, acc in enumerate(self.accounts):
+            if acc.login == login:
+                del self.accounts[i]
+                self.save_accounts()
+                return True
+        return False
+    
+    def get_account(self, login: str) -> Optional[Account]:
+        """Get account by login"""
+        for acc in self.accounts:
+            if acc.login == login:
+                return acc
+        return None
+    
+    def get_all_accounts(self) -> List[Account]:
+        """Get all accounts"""
+        return self.accounts
+    
+    def login_exists(self, login: str) -> bool:
+        """Check if login already exists"""
+        return any(acc.login == login for acc in self.accounts)</pre></div>
+
+    <div class="file-header">core/batch_generator.py</div>
+    <div class="file-content"><pre>"""Batch file generation and parsing module"""
+
+import os
+import re
+from pathlib import Path
+from typing import Dict, Optional, List
+import uuid
+
+
+class BatchGenerator:
+    def __init__(self, game_folder: str):
+        self.game_folder = game_folder
+    
+    def generate_batch_file(self, login: str, password: str, character_name: str = "",
+                          owner: str = "", description: str = "") -> Optional[str]:
+        """Generate a batch file for an account"""
+        if not self.game_folder or not os.path.exists(self.game_folder):
+            return None
+        
+        # Create safe filename
+        safe_login = re.sub(r'[^\w\-_]', '_', login)
+        filename = f"account_{safe_login}.bat"
+        filepath = os.path.join(self.game_folder, filename)
+        
+        # If file exists, use UUID
+        if os.path.exists(filepath):
+            filename = f"account_{uuid.uuid4().hex[:8]}.bat"
+            filepath = os.path.join(self.game_folder, filename)
+        
+        # Build batch content
+        content = "chcp 1251\n"
+        content += f"start elementclient.exe startbypatcher user:{login} pwd:{password}"
+        
+        if character_name:
+            content += f" role:{character_name}"
+        
+        content += "\n"
+        
+        if owner:
+            content += f":: Owner: {owner}\n"
+        
+        if description:
+            content += f":: Description: {description}\n"
+        
+        try:
+            with open(filepath, 'w', encoding='cp1251') as f:
+                f.write(content)
+            return filepath
+        except Exception as e:
+            print(f"Error creating batch file: {e}")
+            return None
+    
+    def parse_batch_file(self, filepath: str) -> Optional[Dict[str, str]]:
+        """Parse a batch file and extract account information"""
+        try:
+            with open(filepath, 'r', encoding='cp1251') as f:
+                content = f.read()
+        except:
+            # Try UTF-8 if cp1251 fails
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except:
+                return None
+        
+        # Extract login, password, and character name
+        match = re.search(r'user:(\S+)\s+pwd:(\S+)(?:\s+role:(\S+))?', content)
+        if not match:
+            return None
+        
+        result = {
+            "login": match.group(1),
+            "password": match.group(2),
+            "character_name": match.group(3) or "",
+            "owner": "",
+            "description": ""
+        }
+        
+        # Extract owner from comment
+        owner_match = re.search(r'::\s*Owner:\s*(.+)$', content, re.MULTILINE)
+        if owner_match:
+            result["owner"] = owner_match.group(1).strip()
+        
+        # Extract description from comment
+        desc_match = re.search(r'::\s*Description:\s*(.+)$', content, re.MULTILINE)
+        if desc_match:
+            result["description"] = desc_match.group(1).strip()
+        
+        return result
+    
+    def scan_folder(self, folder: str = None) -> List[Dict[str, str]]:
+        """Scan folder for batch files and parse them"""
+        scan_folder = folder or self.game_folder
+        if not scan_folder or not os.path.exists(scan_folder):
+            return []
+        
+        accounts = []
+        
+        # Walk through directory and subdirectories
+        for root, dirs, files in os.walk(scan_folder):
+            for file in files:
+                if file.lower().endswith('.bat'):
+                    filepath = os.path.join(root, file)
+                    account_data = self.parse_batch_file(filepath)
+                    if account_data:
+                        accounts.append(account_data)
+        
+        return accounts
+    
+    def delete_batch_file(self, login: str) -> bool:
+        """Delete batch file for a specific account"""
+        if not self.game_folder:
+            return False
+        
+        # Look for batch files that might contain this login
+        for file in os.listdir(self.game_folder):
+            if file.endswith('.bat'):
+                filepath = os.path.join(self.game_folder, file)
+                account_data = self.parse_batch_file(filepath)
+                if account_data and account_data.get('login') == login:
+                    try:
+                        os.remove(filepath)
+                        return True
+                    except:
+                        pass
+        
+        return False</pre></div>
+
+    <div class="file-header">core/game_launcher.py</div>
+    <div class="file-content"><pre>"""Game launching and process management module"""
+
+import os
+import subprocess
+import time
+import psutil
+from typing import Optional, List, Set
+
+
+class GameLauncher:
+    def __init__(self, game_folder: str):
+        self.game_folder = game_folder
+        self.process_map = {}  # Maps login to PID
+    
+    def _get_running_processes(self) -> Set[int]:
+        """Get all running Perfect World processes"""
+        pids = set()
+        for proc in psutil.process_iter(['pid', 'name']):
+            try:
+                # Look for processes with "Asgrad pw" in name or elementclient.exe
+                name = proc.info['name'].lower()
+                if 'elementclient' in name or 'asgrad' in name:
+                    pids.add(proc.info['pid'])
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+        return pids
+    
+    def launch_account(self, login: str, batch_file: str) -> Optional[int]:
+        """Launch game client for an account"""
+        if not os.path.exists(batch_file):
+            return None
+        
+        # Get current running processes
+        before_pids = self._get_running_processes()
+        
+        try:
+            # Launch the batch file
+            process = subprocess.Popen(
+                batch_file,
+                cwd=self.game_folder,
+                shell=True,
+                creationflags=subprocess.CREATE_NEW_CONSOLE
+            )
+            
+            # Wait a bit for the game to start
+            time.sleep(3)
+            
+            # Find new processes
+            after_pids = self._get_running_processes()
+            new_pids = after_pids - before_pids
+            
+            if new_pids:
+                # Take the first new PID
+                pid = next(iter(new_pids))
+                self.process_map[login] = pid
+                return pid
+            
+            return None
+            
+        except Exception as e:
+            print(f"Error launching game: {e}")
+            return None
+    
+    def terminate_account(self, login: str) -> bool:
+        """Terminate game client for an account"""
+        pid = self.process_map.get(login)
+        if not pid:
+            return False
+        
+        try:
+            process = psutil.Process(pid)
+            process.terminate()
+            
+            # Wait for process to terminate
+            try:
+                process.wait(timeout=5)
+            except psutil.TimeoutExpired:
+                # Force kill if it doesn't terminate gracefully
+                process.kill()
+            
+            # Remove from map
+            del self.process_map[login]
+            return True
+            
+        except psutil.NoSuchProcess:
+            # Process already terminated
+            if login in self.process_map:
+                del self.process_map[login]
+            return True
+        except Exception as e:
+            print(f"Error terminating process: {e}")
+            return False
+    
+    def is_account_running(self, login: str) -> bool:
+        """Check if account is currently running"""
+        pid = self.process_map.get(login)
+        if not pid:
+            return False
+        
+        try:
+            process = psutil.Process(pid)
+            return process.is_running()
+        except psutil.NoSuchProcess:
+            # Clean up the map
+            del self.process_map[login]
+            return False
+    
+    def terminate_all(self) -> int:
+        """Terminate all tracked processes"""
+        count = 0
+        logins = list(self.process_map.keys())
+        
+        for login in logins:
+            if self.terminate_account(login):
+                count += 1
+        
+        return count
+    
+    def cleanup_dead_processes(self):
+        """Remove dead processes from tracking"""
+        dead_logins = []
+        
+        for login, pid in self.process_map.items():
+            try:
+                process = psutil.Process(pid)
+                if not process.is_running():
+                    dead_logins.append(login)
+            except psutil.NoSuchProcess:
+                dead_logins.append(login)
+        
+        for login in dead_logins:
+            del self.process_map[login]</pre></div>
+
+    <div class="file-header">utils/validators.py</div>
+    <div class="file-content"><pre>"""Input validation utilities"""
+
+
+def validate_login(login: str) -> tuple[bool, str]:
+    """Validate login field"""
+    if not login:
+        return False, "Login is required"
+    
+    if len(login) < 3:
+        return False, "Login must be at least 3 characters"
+    
+    if len(login) > 50:
+        return False, "Login must be less than 50 characters"
+    
+    # Check for invalid characters
+    if not all(c.isalnum() or c in '_-.' for c in login):
+        return False, "Login can only contain letters, numbers, _, -, and ."
+    
+    return True, ""
+
+
+def validate_password(password: str) -> tuple[bool, str]:
+    """Validate password field"""
+    if not password:
+        return False, "Password is required"
+    
+    if len(password) < 1:
+        return False, "Password cannot be empty"
+    
+    if len(password) > 100:
+        return False, "Password is too long"
+    
+    return True, ""
+
+
+def validate_character_name(name: str) -> tuple[bool, str]:
+    """Validate character name field (optional)"""
+    if not name:  # Optional field
+        return True, ""
+    
+    if len(name) > 50:
+        return False, "Character name is too long"
+    
+    return True, ""
+
+
+def validate_description(desc: str) -> tuple[bool, str]:
+    """Validate description field (optional)"""
+    if len(desc) > 200:
+        return False, "Description is too long (max 200 characters)"
+    
+    return True, ""
+
+
+def validate_owner(owner: str) -> tuple[bool, str]:
+    """Validate owner field (optional)"""
+    if len(owner) > 50:
+        return False, "Owner name is too long (max 50 characters)"
+    
+    return True, ""</pre></div>
+
+    <div class="file-header">ui/dialogs.py</div>
+    <div class="file-content"><pre>"""Dialog windows for the application"""
+
+from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
+                             QLineEdit, QPushButton, QLabel, QMessageBox,
+                             QFileDialog, QDialogButtonBox)
+from PySide6.QtCore import Qt
+
+from core.account_manager import Account
+from utils.validators import (validate_login, validate_password, 
+                            validate_character_name, validate_description,
+                            validate_owner)
+
+
+class AccountDialog(QDialog):
+    """Dialog for adding/editing accounts"""
+    
+    def __init__(self, parent=None, account=None, existing_logins=None):
+        super().__init__(parent)
+        self.account = account
+        self.existing_logins = existing_logins or []
+        self.original_login = account.login if account else None
+        
+        self.setWindowTitle("Edit Account" if account else "Add Account")
+        self.setModal(True)
+        self.setMinimumWidth(400)
+        
+        self.setup_ui()
+        
+        if account:
+            self.load_account_data()
+    
+    def setup_ui(self):
+        """Create the dialog UI"""
+        layout = QVBoxLayout()
+        
+        # Form layout
+        form_layout = QFormLayout()
+        
+        # Login field
+        self.login_edit = QLineEdit()
+        self.login_edit.setPlaceholderText("Required - must be unique")
+        form_layout.addRow("Login:", self.login_edit)
+        
+        # Password field
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.Password)
+        self.password_edit.setPlaceholderText("Required")
+        form_layout.addRow("Password:", self.password_edit)
+        
+        # Character name field
+        self.character_edit = QLineEdit()
+        self.character_edit.setPlaceholderText("Optional")
+        form_layout.addRow("Character Name:", self.character_edit)
+        
+        # Description field
+        self.description_edit = QLineEdit()
+        self.description_edit.setPlaceholderText("Optional")
+        form_layout.addRow("Description:", self.description_edit)
+        
+        # Owner field
+        self.owner_edit = QLineEdit()
+        self.owner_edit.setPlaceholderText("Optional")
+        form_layout.addRow("Owner:", self.owner_edit)
+        
+        layout.addLayout(form_layout)
+        
+        # Buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal
+        )
+        buttons.accepted.connect(self.validate_and_accept)
+        buttons.rejected.connect(self.reject)
+        
+        layout.addWidget(buttons)
+        
+        self.setLayout(layout)
+    
+    def load_account_data(self):
+        """Load existing account data into fields"""
+        if self.account:
+            self.login_edit.setText(self.account.login)
+            self.password_edit.setText(self.account.password)
+            self.character_edit.setText(self.account.character_name)
+            self.description_edit.setText(self.account.description)
+            self.owner_edit.setText(self.account.owner)
+    
+    def validate_and_accept(self):
+        """Validate input and accept if valid"""
+        # Get values
+        login = self.login_edit.text().strip()
+        password = self.password_edit.text()
+        character = self.character_edit.text().strip()
+        description = self.description_edit.text().strip()
+        owner = self.owner_edit.text().strip()
+        
+        # Validate login
+        valid, msg = validate_login(login)
+        if not valid:
+            QMessageBox.warning(self, "Invalid Login", msg)
+            self.login_edit.setFocus()
+            return
+        
+        # Check for duplicate login
+        if login != self.original_login and login in self.existing_logins:
+            QMessageBox.warning(self, "Duplicate Login", 
+                              "An account with this login already exists.")
+            self.login_edit.setFocus()
+            return
+        
+        # Validate password
+        valid, msg = validate_password(password)
+        if not valid:
+            QMessageBox.warning(self, "Invalid Password", msg)
+            self.password_edit.setFocus()
+            return
+        
+        # Validate optional fields
+        for value, validator, field_name in [
+            (character, validate_character_name, "Character Name"),
+            (description, validate_description, "Description"),
+            (owner, validate_owner, "Owner")
+        ]:
+            valid, msg = validator(value)
+            if not valid:
+                QMessageBox.warning(self, f"Invalid {field_name}", msg)
+                return
+        
+        # Create account object
+        self.account = Account(login, password, character, description, owner)
+        self.accept()
+    
+    def get_account(self):
+        """Get the account object"""
+        return self.account
+
+
+class SettingsDialog(QDialog):
+    """Dialog for application settings"""
+    
+    def __init__(self, parent=None, settings_manager=None):
+        super().__init__(parent)
+        self.settings_manager = settings_manager
+        
+        self.setWindowTitle("Settings")
+        self.setModal(True)
+        self.setMinimumWidth(500)
+        
+        self.setup_ui()
+        self.load_settings()
+    
+    def setup_ui(self):
+        """Create the settings dialog UI"""
+        layout = QVBoxLayout()
+        
+        # Game folder selection
+        folder_layout = QHBoxLayout()
+        
+        folder_layout.addWidget(QLabel("Game Folder:"))
+        
+        self.folder_edit = QLineEdit()
+        self.folder_edit.setReadOnly(True)
+        folder_layout.addWidget(self.folder_edit)
+        
+        self.browse_button = QPushButton("Browse...")
+        self.browse_button.clicked.connect(self.browse_folder)
+        folder_layout.addWidget(self.browse_button)
+        
+        layout.addLayout(folder_layout)
+        
+        # Info label
+        info_label = QLabel("The game folder must contain elementclient.exe")
+        info_label.setStyleSheet("color: gray;")
+        layout.addWidget(info_label)
+        
+        # Add stretch
+        layout.addStretch()
+        
+        # Buttons
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal
+        )
+        buttons.accepted.connect(self.validate_and_accept)
+        buttons.rejected.connect(self.reject)
+        
+        layout.addWidget(buttons)
+        
+        self.setLayout(layout)
+    
+    def load_settings(self):
+        """Load current settings"""
+        if self.settings_manager:
+            folder = self.settings_manager.get_game_folder()
+            self.folder_edit.setText(folder)
+    
+    def browse_folder(self):
+        """Open folder browser dialog"""
+        current_folder = self.folder_edit.text()
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select Perfect World Game Folder",
+            current_folder,
+            QFileDialog.ShowDirsOnly
+        )
+        
+        if folder:
+            self.folder_edit.setText(folder)
+    
+    def validate_and_accept(self):
+        """Validate settings and save"""
+        folder = self.folder_edit.text()
+        
+        if not folder:
+            QMessageBox.warning(self, "No Folder Selected", 
+                              "Please select the game folder.")
+            return
+        
+        if not self.settings_manager.is_valid_game_folder(folder):
+            QMessageBox.warning(self, "Invalid Game Folder", 
+                              "The selected folder does not contain elementclient.exe")
+            return
+        
+        # Save settings
+        self.settings_manager.set_game_folder(folder)
+        self.accept()</pre></div>
+
+    <div class="file-header">ui/main_window.py</div>
+    <div class="file-content"><pre>"""Main application window"""
+
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+                             QPushButton, QTableWidget, QTableWidgetItem,
+                             QHeaderView, QMessageBox, QStatusBar, QMenu,
+                             QCheckBox, QToolBar, QStyle)
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QAction
+
+from core.account_manager import AccountManager, Account
+from core.settings_manager import SettingsManager
+from core.game_launcher import GameLauncher
+from core.batch_generator import BatchGenerator
+from ui.dialogs import AccountDialog, SettingsDialog
+
+
+class MainWindow(QMainWindow):
+    """Main application window"""
+    
+    def __init__(self):
+        super().__init__()
+        
+        # Initialize managers
+        self.settings_manager = SettingsManager()
+        self.account_manager = AccountManager()
+        self.game_launcher = None
+        self.batch_generator = None
+        
+        # Initialize game folder dependent components
+        self.init_game_components()
+        
+        # Setup UI
+        self.setWindowTitle("Perfect World Account Manager")
+        self.setup_ui()
+        self.load_accounts()
+        
+        # Restore window geometry
+        self.restore_geometry()
+        
+        # Setup process cleanup timer
+        self.cleanup_timer = QTimer()
+        self.cleanup_timer.timeout.connect(self.cleanup_processes)
+        self.cleanup_timer.start(5000)  # Check every 5 seconds
+    
+    def init_game_components(self):
+        """Initialize components that depend on game folder"""
+        game_folder = self.settings_manager.get_game_folder()
+        if game_folder:
+            self.game_launcher = GameLauncher(game_folder)
+            self.batch_generator = BatchGenerator(game_folder)
+    
+    def setup_ui(self):
+        """Create the main UI"""
+        # Central widget
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        
+        # Main layout
+        layout = QVBoxLayout()
+        central_widget.setLayout(layout)
+        
+        # Create toolbar
+        self.create_toolbar()
+        
+        # Create table
+        self.create_table()
+        layout.addWidget(self.table)
+        
+        # Status bar
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+        self.update_status_bar()
+        
+        # Set minimum size
+        self.setMinimumSize(800, 400)
+    
+    def create_toolbar(self):
+        """Create the toolbar"""
+        toolbar = QToolBar()
+        toolbar.setMovable(False)
+        self.addToolBar(toolbar)
+        
+        # Add Account button
+        add_action = QAction("Add Account", self)
+        add_action.triggered.connect(self.add_account)
+        toolbar.addAction(add_action)
+        
+        # Launch Selected button
+        launch_action = QAction("Launch Selected", self)
+        launch_action.triggered.connect(self.launch_selected)
+        toolbar.addAction(launch_action)
+        
+        # Close Selected button
+        close_action = QAction("Close Selected", self)
+        close_action.triggered.connect(self.close_selected)
+        toolbar.addAction(close_action)
+        
+        # Scan Folder button
+        scan_action = QAction("Scan Folder", self)
+        scan_action.triggered.connect(self.scan_folder)
+        toolbar.addAction(scan_action)
+        
+        toolbar.addSeparator()
+        
+        # Settings button
+        settings_action = QAction("Settings", self)
+        settings_action.triggered.connect(self.open_settings)
+        toolbar.addAction(settings_action)
+    
+    def create_table(self):
+        """Create the accounts table"""
+        self.table = QTableWidget()
+        
+        # Set columns
+        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Actions"]
+        self.table.setColumnCount(len(columns))
+        self.table.setHorizontalHeaderLabels(columns)
+        
+        # Configure table
+        self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSortingEnabled(True)
+        
+        # Set column widths
+        header = self.table.horizontalHeader()
+        header.resizeSection(0, 30)  # Checkbox column
+        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Login
+        header.resizeSection(2, 100)  # Password
+        header.setSectionResizeMode(3, QHeaderView.Stretch)  # Character
+        header.setSectionResizeMode(4, QHeaderView.Stretch)  # Description
+        header.setSectionResizeMode(5, QHeaderView.Stretch)  # Owner
+        header.resizeSection(6, 120)  # Actions
+    
+    def load_accounts(self):
+        """Load accounts into the table"""
+        accounts = self.account_manager.get_all_accounts()
+        
+        # Clear table
+        self.table.setRowCount(0)
+        
+        # Add accounts
+        for account in accounts:
+            self.add_account_to_table(account)
+        
+        self.update_status_bar()
+    
+    def add_account_to_table(self, account):
+        """Add an account to the table"""
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        
+        # Checkbox
+        checkbox = QCheckBox()
+        checkbox_widget = QWidget()
+        checkbox_layout = QHBoxLayout()
+        checkbox_layout.addWidget(checkbox)
+        checkbox_layout.setAlignment(Qt.AlignCenter)
+        checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        checkbox_widget.setLayout(checkbox_layout)
+        self.table.setCellWidget(row, 0, checkbox_widget)
+        
+        # Login
+        self.table.setItem(row, 1, QTableWidgetItem(account.login))
+        
+        # Password (masked)
+        password_item = QTableWidgetItem("••••••")
+        password_item.setData(Qt.UserRole, account.password)
+        self.table.setItem(row, 2, password_item)
+        
+        # Character name
+        self.table.setItem(row, 3, QTableWidgetItem(account.character_name))
+        
+        # Description
+        self.table.setItem(row, 4, QTableWidgetItem(account.description))
+        
+        # Owner
+        self.table.setItem(row, 5, QTableWidgetItem(account.owner))
+        
+        # Actions
+        actions_widget = QWidget()
+        actions_layout = QHBoxLayout()
+        actions_layout.setContentsMargins(5, 0, 5, 0)
+        
+        # Play button
+        play_btn = QPushButton("▶")
+        play_btn.setFixedSize(30, 25)
+        play_btn.setToolTip("Launch game")
+        play_btn.clicked.connect(lambda: self.launch_account(row))
+        actions_layout.addWidget(play_btn)
+        
+        # Kill button
+        kill_btn = QPushButton("✖")
+        kill_btn.setFixedSize(30, 25)
+        kill_btn.setToolTip("Close game")
+        kill_btn.clicked.connect(lambda: self.close_account(row))
+        actions_layout.addWidget(kill_btn)
+        
+        # Menu button
+        menu_btn = QPushButton("⋮")
+        menu_btn.setFixedSize(30, 25)
+        menu_btn.setToolTip("More options")
+        
+        menu = QMenu()
+        edit_action = menu.addAction("Edit")
+        edit_action.triggered.connect(lambda: self.edit_account(row))
+        delete_action = menu.addAction("Delete")
+        delete_action.triggered.connect(lambda: self.delete_account(row))
+        
+        menu_btn.setMenu(menu)
+        actions_layout.addWidget(menu_btn)
+        
+        actions_widget.setLayout(actions_layout)
+        self.table.setCellWidget(row, 6, actions_widget)
+        
+        # Store account reference
+        self.table.item(row, 1).setData(Qt.UserRole, account)
+    
+    def add_account(self):
+        """Show add account dialog"""
+        existing_logins = [acc.login for acc in self.account_manager.get_all_accounts()]
+        dialog = AccountDialog(self, existing_logins=existing_logins)
+        
+        if dialog.exec():
+            account = dialog.get_account()
+            if self.account_manager.add_account(account):
+                # Generate batch file
+                if self.batch_generator:
+                    self.batch_generator.generate_batch_file(
+                        account.login, account.password, account.character_name,
+                        account.owner, account.description
+                    )
+                
+                self.add_account_to_table(account)
+                self.update_status_bar()
+            else:
+                QMessageBox.warning(self, "Error", "Failed to add account.")
+    
+    def edit_account(self, row):
+        """Edit an account"""
+        login_item = self.table.item(row, 1)
+        if not login_item:
+            return
+        
+        account = login_item.data(Qt.UserRole)
+        existing_logins = [acc.login for acc in self.account_manager.get_all_accounts() 
+                          if acc.login != account.login]
+        
+        dialog = AccountDialog(self, account=account, existing_logins=existing_logins)
+        
+        if dialog.exec():
+            new_account = dialog.get_account()
+            
+            # Delete old batch file if login changed
+            if account.login != new_account.login and self.batch_generator:
+                self.batch_generator.delete_batch_file(account.login)
+            
+            if self.account_manager.update_account(account.login, new_account):
+                # Generate new batch file
+                if self.batch_generator:
+                    self.batch_generator.generate_batch_file(
+                        new_account.login, new_account.password, new_account.character_name,
+                        new_account.owner, new_account.description
+                    )
+                
+                # Update table
+                self.table.item(row, 1).setText(new_account.login)
+                self.table.item(row, 1).setData(Qt.UserRole, new_account)
+                self.table.item(row, 2).setData(Qt.UserRole, new_account.password)
+                self.table.item(row, 3).setText(new_account.character_name)
+                self.table.item(row, 4).setText(new_account.description)
+                self.table.item(row, 5).setText(new_account.owner)
+    
+    def delete_account(self, row):
+        """Delete an account"""
+        login_item = self.table.item(row, 1)
+        if not login_item:
+            return
+        
+        account = login_item.data(Qt.UserRole)
+        
+        reply = QMessageBox.question(
+            self, "Delete Account",
+            f"Are you sure you want to delete the account '{account.login}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            # Terminate if running
+            if self.game_launcher and self.game_launcher.is_account_running(account.login):
+                self.game_launcher.terminate_account(account.login)
+            
+            # Delete batch file
+            if self.batch_generator:
+                self.batch_generator.delete_batch_file(account.login)
+            
+            # Delete from manager
+            if self.account_manager.delete_account(account.login):
+                self.table.removeRow(row)
+                self.update_status_bar()
+    
+    def launch_account(self, row):
+        """Launch a single account"""
+        if not self.check_game_folder():
+            return
+        
+        login_item = self.table.item(row, 1)
+        if not login_item:
+            return
+        
+        account = login_item.data(Qt.UserRole)
+        
+        # Check if already running
+        if self.game_launcher.is_account_running(account.login):
+            QMessageBox.information(self, "Already Running", 
+                                  f"Account '{account.login}' is already running.")
+            return
+        
+        # Generate batch file if needed
+        batch_file = None
+        if self.batch_generator:
+            batch_file = self.batch_generator.generate_batch_file(
+                account.login, account.password, account.character_name,
+                account.owner, account.description
+            )
+        
+        if not batch_file:
+            QMessageBox.warning(self, "Error", "Failed to create batch file.")
+            return
+        
+        # Launch the game
+        pid = self.game_launcher.launch_account(account.login, batch_file)
+        if pid:
+            self.update_row_status(row, True)
+            QMessageBox.information(self, "Success", 
+                                  f"Account '{account.login}' launched successfully.")
+        else:
+            QMessageBox.warning(self, "Error", 
+                              f"Failed to launch account '{account.login}'.")
+    
+    def close_account(self, row):
+        """Close a single account"""
+        if not self.game_launcher:
+            return
+        
+        login_item = self.table.item(row, 1)
+        if not login_item:
+            return
+        
+        account = login_item.data(Qt.UserRole)
+        
+        if self.game_launcher.terminate_account(account.login):
+            self.update_row_status(row, False)
+            QMessageBox.information(self, "Success", 
+                                  f"Account '{account.login}' closed successfully.")
+        else:
+            QMessageBox.warning(self, "Error", 
+                              f"Failed to close account '{account.login}'.")
+    
+    def launch_selected(self):
+        """Launch all selected accounts"""
+        if not self.check_game_folder():
+            return
+        
+        selected_rows = self.get_selected_rows()
+        if not selected_rows:
+            QMessageBox.information(self, "No Selection", 
+                                  "Please select accounts to launch.")
+            return
+        
+        launched = 0
+        for row in selected_rows:
+            login_item = self.table.item(row, 1)
+            if login_item:
+                account = login_item.data(Qt.UserRole)
+                
+                if not self.game_launcher.is_account_running(account.login):
+                    batch_file = self.batch_generator.generate_batch_file(
+                        account.login, account.password, account.character_name,
+                        account.owner, account.description
+                    )
+                    
+                    if batch_file:
+                        pid = self.game_launcher.launch_account(account.login, batch_file)
+                        if pid:
+                            self.update_row_status(row, True)
+                            launched += 1
+        
+        QMessageBox.information(self, "Launch Complete", 
+                              f"Launched {launched} account(s).")
+    
+    def close_selected(self):
+        """Close all selected accounts"""
+        if not self.game_launcher:
+            return
+        
+        selected_rows = self.get_selected_rows()
+        if not selected_rows:
+            QMessageBox.information(self, "No Selection", 
+                                  "Please select accounts to close.")
+            return
+        
+        closed = 0
+        for row in selected_rows:
+            login_item = self.table.item(row, 1)
+            if login_item:
+                account = login_item.data(Qt.UserRole)
+                
+                if self.game_launcher.terminate_account(account.login):
+                    self.update_row_status(row, False)
+                    closed += 1
+        
+        QMessageBox.information(self, "Close Complete", 
+                              f"Closed {closed} account(s).")
+    
+    def scan_folder(self):
+        """Scan game folder for batch files"""
+        if not self.check_game_folder():
+            return
+        
+        accounts_data = self.batch_generator.scan_folder()
+        
+        if not accounts_data:
+            QMessageBox.information(self, "Scan Complete", 
+                                  "No account batch files found.")
+            return
+        
+        # Filter out existing accounts
+        existing_logins = [acc.login for acc in self.account_manager.get_all_accounts()]
+        new_accounts = [acc for acc in accounts_data if acc['login'] not in existing_logins]
+        
+        if not new_accounts:
+            QMessageBox.information(self, "Scan Complete", 
+                                  "No new accounts found. All found accounts already exist.")
+            return
+        
+        # Add new accounts
+        added = 0
+        for acc_data in new_accounts:
+            account = Account(
+                login=acc_data['login'],
+                password=acc_data['password'],
+                character_name=acc_data.get('character_name', ''),
+                description=acc_data.get('description', ''),
+                owner=acc_data.get('owner', '')
+            )
+            
+            if self.account_manager.add_account(account):
+                self.add_account_to_table(account)
+                added += 1
+        
+        self.update_status_bar()
+        QMessageBox.information(self, "Scan Complete", 
+                              f"Found {len(accounts_data)} account(s).\n"
+                              f"Added {added} new account(s).")
+    
+    def open_settings(self):
+        """Open settings dialog"""
+        dialog = SettingsDialog(self, self.settings_manager)
+        
+        if dialog.exec():
+            # Reinitialize game components with new folder
+            self.init_game_components()
+            QMessageBox.information(self, "Settings Saved", 
+                                  "Settings have been saved successfully.")
+    
+    def get_selected_rows(self):
+        """Get all rows with checked checkboxes"""
+        selected = []
+        
+        for row in range(self.table.rowCount()):
+            checkbox_widget = self.table.cellWidget(row, 0)
+            if checkbox_widget:
+                checkbox = checkbox_widget.findChild(QCheckBox)
+                if checkbox and checkbox.isChecked():
+                    selected.append(row)
+        
+        return selected
+    
+    def update_row_status(self, row, running):
+        """Update visual status of a row"""
+        # Could add visual indicators here (e.g., background color)
+        pass
+    
+    def cleanup_processes(self):
+        """Clean up dead processes"""
+        if self.game_launcher:
+            self.game_launcher.cleanup_dead_processes()
+    
+    def update_status_bar(self):
+        """Update the status bar"""
+        count = self.table.rowCount()
+        self.status_bar.showMessage(f"{count} account(s) loaded")
+    
+    def check_game_folder(self):
+        """Check if game folder is set"""
+        if not self.settings_manager.get_game_folder():
+            QMessageBox.warning(self, "No Game Folder", 
+                              "Please set the game folder in Settings first.")
+            self.open_settings()
+            return False
+        return True
+    
+    def restore_geometry(self):
+        """Restore window geometry from settings"""
+        geometry = self.settings_manager.get_window_geometry()
+        if geometry:
+            self.restoreGeometry(geometry)
+    
+    def closeEvent(self, event):
+        """Handle window close event"""
+        # Save window geometry
+        self.settings_manager.set_window_geometry(self.saveGeometry())
+        
+        # Terminate all running processes
+        if self.game_launcher:
+            running = sum(1 for acc in self.account_manager.get_all_accounts() 
+                         if self.game_launcher.is_account_running(acc.login))
+            
+            if running > 0:
+                reply = QMessageBox.question(
+                    self, "Close Application",
+                    f"There are {running} game client(s) still running.\n"
+                    "Do you want to close them before exiting?",
+                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
+                )
+                
+                if reply == QMessageBox.Cancel:
+                    event.ignore()
+                    return
+                elif reply == QMessageBox.Yes:
+                    self.game_launcher.terminate_all()
+        
+        event.accept()</pre></div>
+
+    <h2>Setup Instructions</h2>
+
+    <div class="instruction-box">
+        <h3>Environment Setup</h3>
+        <ol>
+            <li>Install Python 3.8 or higher on Windows</li>
+            <li>Create project directory: <code>perfect_world_account_manager</code></li>
+            <li>Create virtual environment:
+                <pre>python -m venv venv
+.\venv\Scripts\Activate.ps1</pre>
+            </li>
+            <li>Install dependencies:
+                <pre>pip install PySide6 psutil</pre>
+            </li>
+        </ol>
+    </div>
+
+    <div class="instruction-box">
+        <h3>File Creation Steps</h3>
+        <ol>
+            <li>Create the directory structure as shown above</li>
+            <li>Create empty <code>__init__.py</code> files in <code>ui/</code>, <code>core/</code>, and <code>utils/</code></li>
+            <li>Copy each file's content from this document into the corresponding file</li>
+            <li>Ensure all files use UTF-8 encoding</li>
+        </ol>
+    </div>
+
+    <div class="warning-box">
+        <h3>Important Notes</h3>
+        <ul>
+            <li>The application requires the Perfect World game to be installed</li>
+            <li>Game folder must contain <code>elementclient.exe</code></li>
+            <li>Batch files are created with CP1251 encoding as specified</li>
+            <li>Process tracking uses psutil which may require admin privileges</li>
+        </ul>
+    </div>
+
+    <h2>Running the Application</h2>
+    <pre>python main.py</pre>
+
+    <h2>Building Executable</h2>
+    <pre>pip install pyinstaller
+pyinstaller --onefile --windowed --name "PW Account Manager" main.py</pre>
+
+    <div class="instruction-box">
+        <h3>First Run Configuration</h3>
+        <ol>
+            <li>Click <strong>Settings</strong> button</li>
+            <li>Browse and select Perfect World game folder</li>
+            <li>Verify folder contains <code>elementclient.exe</code></li>
+            <li>Click OK to save settings</li>
+        </ol>
+    </div>
+</body>
+</html>
