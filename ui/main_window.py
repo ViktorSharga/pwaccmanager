@@ -113,6 +113,16 @@ class MainWindow(QMainWindow):
         settings_action = QAction("Settings", self)
         settings_action.triggered.connect(self.open_settings)
         toolbar.addAction(settings_action)
+        
+        toolbar.addSeparator()
+        
+        # Master checkbox for select all
+        self.master_checkbox = QCheckBox()
+        self.master_checkbox.setTristate(True)
+        self.master_checkbox.setToolTip("Select/Unselect all accounts")
+        self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
+        toolbar.addWidget(QLabel("Select All:"))
+        toolbar.addWidget(self.master_checkbox)
     
     def create_table(self):
         """Create the accounts table"""
@@ -167,6 +177,7 @@ class MainWindow(QMainWindow):
             self.add_account_to_table(account)
         
         self.update_status_bar()
+        self.update_master_checkbox_state()
     
     def add_account_to_table(self, account):
         """Add an account to the table"""
@@ -175,6 +186,7 @@ class MainWindow(QMainWindow):
         
         # Checkbox
         checkbox = QCheckBox()
+        checkbox.stateChanged.connect(self.on_row_checkbox_changed)
         checkbox_widget = QWidget()
         checkbox_layout = QHBoxLayout()
         checkbox_layout.addWidget(checkbox)
@@ -268,6 +280,7 @@ class MainWindow(QMainWindow):
                 
                 self.add_account_to_table(account)
                 self.update_status_bar()
+                self.update_master_checkbox_state()
             else:
                 QMessageBox.warning(self, "Error", "Failed to add account.")
     
@@ -334,6 +347,7 @@ class MainWindow(QMainWindow):
             if self.account_manager.delete_account(account.login):
                 self.table.removeRow(row)
                 self.update_status_bar()
+                self.update_master_checkbox_state()
     
     def launch_account(self, row):
         """Launch a single account"""
@@ -497,6 +511,7 @@ class MainWindow(QMainWindow):
                 added += 1
         
         self.update_status_bar()
+        self.update_master_checkbox_state()
         QMessageBox.information(self, "Scan Complete", 
                               f"Found {len(accounts_data)} account(s).\n"
                               f"Added {added} new account(s).")
@@ -565,6 +580,55 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, "Clipboard Error", 
                               f"Failed to copy {field_name.lower()} to clipboard: {e}")
+    
+    def on_row_checkbox_changed(self):
+        """Handle individual row checkbox changes"""
+        self.update_master_checkbox_state()
+    
+    def on_master_checkbox_changed(self, state):
+        """Handle master checkbox state changes"""
+        if state == Qt.Checked:
+            # Select all
+            self.select_all_rows(True)
+        elif state == Qt.Unchecked:
+            # Unselect all
+            self.select_all_rows(False)
+        # Indeterminate state doesn't trigger action
+    
+    def select_all_rows(self, select):
+        """Select or unselect all rows"""
+        for row in range(self.table.rowCount()):
+            checkbox_widget = self.table.cellWidget(row, 0)
+            if checkbox_widget:
+                checkbox = checkbox_widget.findChild(QCheckBox)
+                if checkbox:
+                    checkbox.setChecked(select)
+    
+    def update_master_checkbox_state(self):
+        """Update master checkbox state based on individual checkboxes"""
+        if not hasattr(self, 'master_checkbox') or not self.master_checkbox:
+            return
+            
+        total_rows = self.table.rowCount()
+        if total_rows == 0:
+            self.master_checkbox.setCheckState(Qt.Unchecked)
+            return
+        
+        checked_count = 0
+        for row in range(total_rows):
+            checkbox_widget = self.table.cellWidget(row, 0)
+            if checkbox_widget:
+                checkbox = checkbox_widget.findChild(QCheckBox)
+                if checkbox and checkbox.isChecked():
+                    checked_count += 1
+        
+        # Set master checkbox state
+        if checked_count == 0:
+            self.master_checkbox.setCheckState(Qt.Unchecked)
+        elif checked_count == total_rows:
+            self.master_checkbox.setCheckState(Qt.Checked)
+        else:
+            self.master_checkbox.setCheckState(Qt.PartiallyChecked)
     
     def cleanup_processes(self):
         """Clean up dead processes"""
