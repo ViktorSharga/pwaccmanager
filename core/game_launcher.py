@@ -26,9 +26,9 @@ class GameLauncher:
         pids = set()
         for proc in psutil.process_iter(['pid', 'name']):
             try:
-                # Look for processes with "Asgrad pw" in name or elementclient.exe
+                # Look for processes with "Asgard Perfect World" in name or elementclient.exe
                 name = proc.info['name'].lower()
-                if 'elementclient' in name or 'asgrad' in name:
+                if 'elementclient' in name or 'asgard' in name or 'perfect world' in name:
                     pids.add(proc.info['pid'])
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
