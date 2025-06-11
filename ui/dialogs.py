@@ -2,7 +2,7 @@
 
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
                              QLineEdit, QPushButton, QLabel, QMessageBox,
-                             QFileDialog, QDialogButtonBox)
+                             QFileDialog, QDialogButtonBox, QSpinBox)
 from PySide6.QtCore import Qt
 
 from core.account_manager import Account
@@ -173,6 +173,26 @@ class SettingsDialog(QDialog):
         info_label.setStyleSheet("color: gray;")
         layout.addWidget(info_label)
         
+        # Launch delay setting
+        delay_layout = QHBoxLayout()
+        
+        delay_layout.addWidget(QLabel("Launch Delay:"))
+        
+        self.delay_spinbox = QSpinBox()
+        self.delay_spinbox.setMinimum(1)
+        self.delay_spinbox.setMaximum(30)
+        self.delay_spinbox.setSuffix(" seconds")
+        self.delay_spinbox.setToolTip("Delay between consecutive game launches (1-30 seconds)")
+        delay_layout.addWidget(self.delay_spinbox)
+        
+        delay_layout.addStretch()
+        layout.addLayout(delay_layout)
+        
+        # Delay info label
+        delay_info = QLabel("Time to wait between launching multiple accounts")
+        delay_info.setStyleSheet("color: gray;")
+        layout.addWidget(delay_info)
+        
         # Add stretch
         layout.addStretch()
         
@@ -193,6 +213,9 @@ class SettingsDialog(QDialog):
         if self.settings_manager:
             folder = self.settings_manager.get_game_folder()
             self.folder_edit.setText(folder)
+            
+            delay = self.settings_manager.get_launch_delay()
+            self.delay_spinbox.setValue(delay)
     
     def browse_folder(self):
         """Open folder browser dialog"""
@@ -223,4 +246,5 @@ class SettingsDialog(QDialog):
         
         # Save settings
         self.settings_manager.set_game_folder(folder)
+        self.settings_manager.set_launch_delay(self.delay_spinbox.value())
         self.accept()

@@ -50,6 +50,11 @@ class MainWindow(QMainWindow):
         if game_folder:
             self.game_launcher = GameLauncher(game_folder)
             self.batch_generator = BatchGenerator(game_folder)
+            
+            # Apply launch delay setting
+            if self.game_launcher:
+                delay = self.settings_manager.get_launch_delay()
+                self.game_launcher.set_launch_delay(delay)
     
     def setup_ui(self):
         """Create the main UI"""

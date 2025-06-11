@@ -25,7 +25,8 @@ class SettingsManager:
         # Default settings
         return {
             "game_folder": "",
-            "window_geometry": None
+            "window_geometry": None,
+            "launch_delay": 3  # Default 3 seconds delay between launches
         }
     
     def save_settings(self):
@@ -62,4 +63,13 @@ class SettingsManager:
     def set_window_geometry(self, geometry):
         """Save window geometry"""
         self.settings["window_geometry"] = geometry
+        self.save_settings()
+    
+    def get_launch_delay(self):
+        """Get the launch delay in seconds"""
+        return self.settings.get("launch_delay", 3)
+    
+    def set_launch_delay(self, delay):
+        """Set the launch delay in seconds"""
+        self.settings["launch_delay"] = max(1, min(30, delay))  # Clamp between 1-30 seconds
         self.save_settings()
