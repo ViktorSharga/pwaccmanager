@@ -291,14 +291,14 @@ class MainWindow(QMainWindow):
         welcome_layout.addLayout(button_layout)
         
         self.welcome_widget.setLayout(welcome_layout)
-        self.welcome_widget.hide()  # Initially hidden
+        # Don't hide initially - let update_welcome_screen_visibility decide
     
     def create_table(self):
         """Create the accounts table"""
         self.table = QTableWidget()
         
         # Set columns
-        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
+        columns = [" ", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
         self.table.setColumnCount(len(columns))
         self.table.setHorizontalHeaderLabels(columns)
         
@@ -347,6 +347,9 @@ class MainWindow(QMainWindow):
             QTableWidget QHeaderView::section:hover {
                 background-color: #e0e0e0;
             }
+            QTableWidget QHeaderView::section:first {
+                text-align: center;
+            }
         """)
         
         # Set column widths
@@ -359,6 +362,15 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(5, QHeaderView.Stretch)  # Owner
         header.resizeSection(6, 60)  # Server
         header.resizeSection(7, 120)  # Actions
+        
+        # Set row height to accommodate buttons
+        self.table.verticalHeader().setDefaultSectionSize(28)
+        
+        # Hide row numbers/vertical header
+        self.table.verticalHeader().setVisible(False)
+        
+        # Initially hide table - let update_welcome_screen_visibility decide
+        self.table.hide()
     
     def load_accounts(self):
         """Load accounts into the table"""
@@ -426,16 +438,17 @@ class MainWindow(QMainWindow):
         
         # Play button
         play_btn = QPushButton("▶")
-        play_btn.setFixedSize(30, 25)
+        play_btn.setFixedSize(24, 20)
         play_btn.setToolTip("Launch game")
         play_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4caf50;
                 color: white;
                 border: none;
-                border-radius: 3px;
-                font-size: 12px;
+                border-radius: 2px;
+                font-size: 10px;
                 font-weight: bold;
+                text-align: center;
             }
             QPushButton:hover {
                 background-color: #45a049;
@@ -446,16 +459,17 @@ class MainWindow(QMainWindow):
         
         # Kill button
         kill_btn = QPushButton("✖")
-        kill_btn.setFixedSize(30, 25)
+        kill_btn.setFixedSize(24, 20)
         kill_btn.setToolTip("Close game")
         kill_btn.setStyleSheet("""
             QPushButton {
                 background-color: #f44336;
                 color: white;
                 border: none;
-                border-radius: 3px;
-                font-size: 12px;
+                border-radius: 2px;
+                font-size: 10px;
                 font-weight: bold;
+                text-align: center;
             }
             QPushButton:hover {
                 background-color: #da190b;
@@ -466,16 +480,17 @@ class MainWindow(QMainWindow):
         
         # Menu button
         menu_btn = QPushButton("⋮")
-        menu_btn.setFixedSize(30, 25)
+        menu_btn.setFixedSize(24, 20)
         menu_btn.setToolTip("More options")
         menu_btn.setStyleSheet("""
             QPushButton {
                 background-color: #2196f3;
                 color: white;
                 border: none;
-                border-radius: 3px;
-                font-size: 14px;
+                border-radius: 2px;
+                font-size: 12px;
                 font-weight: bold;
+                text-align: center;
             }
             QPushButton:hover {
                 background-color: #1976d2;
