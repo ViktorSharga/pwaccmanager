@@ -5,9 +5,15 @@ from functools import partial
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QHeaderView, QMessageBox, QStatusBar, QMenu,
-                             QCheckBox, QToolBar, QStyle, QApplication)
+                             QCheckBox, QToolBar, QStyle, QApplication, QFileDialog,
+                             QDialog, QVBoxLayout as QVBoxLayoutDialog, QListWidget,
+                             QDialogButtonBox, QProgressBar, QLabel)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QAction, QCursor
+
+import json
+import os
+from datetime import datetime
 
 from core.account_manager import AccountManager, Account
 from core.settings_manager import SettingsManager
@@ -106,6 +112,17 @@ class MainWindow(QMainWindow):
         scan_action = QAction("Scan Folder", self)
         scan_action.triggered.connect(self.scan_folder)
         toolbar.addAction(scan_action)
+        
+        toolbar.addSeparator()
+        
+        # Import/Export buttons
+        import_action = QAction("Import", self)
+        import_action.triggered.connect(self.import_accounts)
+        toolbar.addAction(import_action)
+        
+        export_action = QAction("Export", self)
+        export_action.triggered.connect(self.export_accounts)
+        toolbar.addAction(export_action)
         
         toolbar.addSeparator()
         
@@ -629,6 +646,310 @@ class MainWindow(QMainWindow):
             self.master_checkbox.setCheckState(Qt.Checked)
         else:
             self.master_checkbox.setCheckState(Qt.PartiallyChecked)
+    
+    def export_accounts(self):
+        """Export accounts to JSON file"""
+        accounts = self.account_manager.get_all_accounts()
+        if not accounts:
+            QMessageBox.information(self, "No Accounts", "No accounts to export.")
+            return
+        
+        # Show export options dialog
+        selected_accounts = self.show_export_dialog()
+        if selected_accounts is None:
+            return  # User cancelled
+        
+        # Get save file path
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"pw_accounts_export_{timestamp}.json"
+        
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export Accounts",
+            default_filename,
+            "JSON Files (*.json);;All Files (*)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            # Create export data
+            export_data = {
+                "metadata": {
+                    "version": "1.0",
+                    "exportDate": datetime.now().isoformat(),
+                    "accountCount": len(selected_accounts),
+                    "encrypted": False
+                },
+                "accounts": []
+            }
+            
+            # Add selected accounts
+            for account in selected_accounts:
+                account_data = account.to_dict()
+                export_data["accounts"].append(account_data)
+            
+            # Write to file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(export_data, f, indent=2, ensure_ascii=False)
+            
+            QMessageBox.information(self, "Export Successful", 
+                                  f"Exported {len(selected_accounts)} account(s) to:\n{file_path}")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Export Error", 
+                               f"Failed to export accounts:\n{str(e)}")
+    
+    def show_export_dialog(self):
+        """Show dialog to select accounts for export"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Select Accounts to Export")
+        dialog.setModal(True)
+        dialog.setMinimumSize(400, 300)
+        
+        layout = QVBoxLayoutDialog()
+        
+        # Instructions
+        label = QLabel("Select accounts to export:")
+        layout.addWidget(label)
+        
+        # Account list
+        account_list = QListWidget()
+        accounts = self.account_manager.get_all_accounts()
+        
+        for account in accounts:
+            item_text = f"{account.login} ({account.server}) - {account.character_name or 'No character'}"
+            item = account_list.addItem(item_text)
+            account_list.item(account_list.count() - 1).setData(Qt.UserRole, account)
+            account_list.item(account_list.count() - 1).setCheckState(Qt.Checked)
+        
+        account_list.setSelectionMode(QListWidget.MultiSelection)
+        layout.addWidget(account_list)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        
+        select_all_btn = QPushButton("Select All")
+        select_all_btn.clicked.connect(lambda: self.set_all_items_checked(account_list, True))
+        button_layout.addWidget(select_all_btn)
+        
+        select_none_btn = QPushButton("Select None")
+        select_none_btn.clicked.connect(lambda: self.set_all_items_checked(account_list, False))
+        button_layout.addWidget(select_none_btn)
+        
+        layout.addLayout(button_layout)
+        
+        # Dialog buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        
+        dialog.setLayout(layout)
+        
+        if dialog.exec() == QDialog.Accepted:
+            # Get selected accounts
+            selected_accounts = []
+            for i in range(account_list.count()):
+                item = account_list.item(i)
+                if item.checkState() == Qt.Checked:
+                    account = item.data(Qt.UserRole)
+                    selected_accounts.append(account)
+            return selected_accounts
+        
+        return None
+    
+    def set_all_items_checked(self, list_widget, checked):
+        """Set all items in list widget to checked or unchecked"""
+        for i in range(list_widget.count()):
+            item = list_widget.item(i)
+            item.setCheckState(Qt.Checked if checked else Qt.Unchecked)
+    
+    def import_accounts(self):
+        """Import accounts from JSON file"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import Accounts",
+            "",
+            "JSON Files (*.json);;All Files (*)"
+        )
+        
+        if not file_path:
+            return
+        
+        try:
+            # Read and validate JSON file
+            with open(file_path, 'r', encoding='utf-8') as f:
+                import_data = json.load(f)
+            
+            # Validate JSON structure
+            if not self.validate_import_data(import_data):
+                QMessageBox.critical(self, "Invalid File", 
+                                   "The selected file is not a valid account export file.")
+                return
+            
+            accounts_data = import_data.get("accounts", [])
+            if not accounts_data:
+                QMessageBox.information(self, "No Accounts", 
+                                      "No accounts found in the import file.")
+                return
+            
+            # Show import preview dialog
+            accounts_to_import = self.show_import_dialog(accounts_data)
+            if accounts_to_import is None:
+                return  # User cancelled
+            
+            # Import accounts
+            imported_count = 0
+            skipped_count = 0
+            error_count = 0
+            
+            for account_data in accounts_to_import:
+                try:
+                    # Create account object
+                    account = Account(
+                        login=account_data.get("login", ""),
+                        password=account_data.get("password", ""),
+                        character_name=account_data.get("character_name", ""),
+                        description=account_data.get("description", ""),
+                        owner=account_data.get("owner", ""),
+                        server=account_data.get("server", "Main")
+                    )
+                    
+                    # Check for duplicate
+                    if self.account_manager.login_exists(account.login):
+                        skipped_count += 1
+                        continue
+                    
+                    # Add account
+                    if self.account_manager.add_account(account):
+                        # Generate batch file
+                        if self.batch_generator:
+                            self.batch_generator.generate_batch_file(
+                                account.login, account.password, account.character_name,
+                                account.owner, account.description
+                            )
+                        
+                        self.add_account_to_table(account)
+                        imported_count += 1
+                    else:
+                        error_count += 1
+                        
+                except Exception as e:
+                    print(f"Error importing account: {e}")
+                    error_count += 1
+            
+            # Update UI
+            self.update_status_bar()
+            self.update_master_checkbox_state()
+            
+            # Show results
+            message = f"Import completed:\n"
+            message += f"• Imported: {imported_count} account(s)\n"
+            if skipped_count > 0:
+                message += f"• Skipped (duplicates): {skipped_count} account(s)\n"
+            if error_count > 0:
+                message += f"• Errors: {error_count} account(s)\n"
+            
+            QMessageBox.information(self, "Import Complete", message)
+            
+        except json.JSONDecodeError:
+            QMessageBox.critical(self, "Invalid File", 
+                               "The selected file is not a valid JSON file.")
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", 
+                               f"Failed to import accounts:\n{str(e)}")
+    
+    def validate_import_data(self, data):
+        """Validate import JSON data structure"""
+        if not isinstance(data, dict):
+            return False
+        
+        # Check for required structure
+        if "accounts" not in data:
+            return False
+        
+        accounts = data["accounts"]
+        if not isinstance(accounts, list):
+            return False
+        
+        # Validate account structure
+        for account in accounts:
+            if not isinstance(account, dict):
+                return False
+            if "login" not in account or "password" not in account:
+                return False
+        
+        return True
+    
+    def show_import_dialog(self, accounts_data):
+        """Show dialog to preview and select accounts for import"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Import Preview")
+        dialog.setModal(True)
+        dialog.setMinimumSize(500, 400)
+        
+        layout = QVBoxLayoutDialog()
+        
+        # Instructions
+        label = QLabel("Preview accounts to import (duplicates will be skipped):")
+        layout.addWidget(label)
+        
+        # Account list
+        account_list = QListWidget()
+        existing_logins = [acc.login for acc in self.account_manager.get_all_accounts()]
+        
+        for account_data in accounts_data:
+            login = account_data.get("login", "Unknown")
+            server = account_data.get("server", "Main")
+            character = account_data.get("character_name", "No character")
+            
+            item_text = f"{login} ({server}) - {character}"
+            if login in existing_logins:
+                item_text += " [DUPLICATE - WILL BE SKIPPED]"
+            
+            item = account_list.addItem(item_text)
+            account_list.item(account_list.count() - 1).setData(Qt.UserRole, account_data)
+            
+            # Check by default unless it's a duplicate
+            check_state = Qt.Unchecked if login in existing_logins else Qt.Checked
+            account_list.item(account_list.count() - 1).setCheckState(check_state)
+        
+        layout.addWidget(account_list)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        
+        select_all_btn = QPushButton("Select All")
+        select_all_btn.clicked.connect(lambda: self.set_all_items_checked(account_list, True))
+        button_layout.addWidget(select_all_btn)
+        
+        select_none_btn = QPushButton("Select None")
+        select_none_btn.clicked.connect(lambda: self.set_all_items_checked(account_list, False))
+        button_layout.addWidget(select_none_btn)
+        
+        layout.addLayout(button_layout)
+        
+        # Dialog buttons
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        
+        dialog.setLayout(layout)
+        
+        if dialog.exec() == QDialog.Accepted:
+            # Get selected accounts
+            selected_accounts = []
+            for i in range(account_list.count()):
+                item = account_list.item(i)
+                if item.checkState() == Qt.Checked:
+                    account_data = item.data(Qt.UserRole)
+                    selected_accounts.append(account_data)
+            return selected_accounts
+        
+        return None
     
     def cleanup_processes(self):
         """Clean up dead processes"""
