@@ -42,6 +42,9 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.load_accounts()
         
+        # Ensure proper initial state
+        self.update_welcome_screen_visibility()
+        
         # Restore window geometry
         self.restore_geometry()
         
@@ -81,6 +84,7 @@ class MainWindow(QMainWindow):
         # Create welcome screen
         self.create_welcome_screen()
         
+        # Add table and welcome widget to layout
         layout.addWidget(self.table)
         layout.addWidget(self.welcome_widget)
         
@@ -298,6 +302,9 @@ class MainWindow(QMainWindow):
         self.table.setColumnCount(len(columns))
         self.table.setHorizontalHeaderLabels(columns)
         
+        # Start with 0 rows - only add rows when accounts are added
+        self.table.setRowCount(0)
+        
         # Configure table
         self.table.setAlternatingRowColors(True)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -357,12 +364,14 @@ class MainWindow(QMainWindow):
         """Load accounts into the table"""
         accounts = self.account_manager.get_all_accounts()
         
-        # Clear table
+        # Clear table completely
         self.table.setRowCount(0)
+        self.table.clearContents()
         
-        # Add accounts
-        for account in accounts:
-            self.add_account_to_table(account)
+        # Only add rows for actual accounts
+        if accounts:
+            for account in accounts:
+                self.add_account_to_table(account)
         
         self.update_status_bar()
         self.update_master_checkbox_state()
@@ -419,6 +428,19 @@ class MainWindow(QMainWindow):
         play_btn = QPushButton("▶")
         play_btn.setFixedSize(30, 25)
         play_btn.setToolTip("Launch game")
+        play_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4caf50;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
         play_btn.clicked.connect(partial(self.launch_account, row))
         actions_layout.addWidget(play_btn)
         
@@ -426,6 +448,19 @@ class MainWindow(QMainWindow):
         kill_btn = QPushButton("✖")
         kill_btn.setFixedSize(30, 25)
         kill_btn.setToolTip("Close game")
+        kill_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+        """)
         kill_btn.clicked.connect(partial(self.close_account, row))
         actions_layout.addWidget(kill_btn)
         
@@ -433,6 +468,19 @@ class MainWindow(QMainWindow):
         menu_btn = QPushButton("⋮")
         menu_btn.setFixedSize(30, 25)
         menu_btn.setToolTip("More options")
+        menu_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196f3;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+        """)
         
         # Create menu and connect it properly
         menu = QMenu(menu_btn)
