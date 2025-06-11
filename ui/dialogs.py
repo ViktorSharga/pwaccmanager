@@ -151,29 +151,38 @@ class AccountDialog(QDialog):
                 background-color: #fafafa;
             }
             QLabel {
-                color: #333333;
-                font-weight: 500;
+                color: #212121;
+                font-weight: 600;
+                font-size: 13px;
             }
             QLineEdit {
                 border: 2px solid #e0e0e0;
                 border-radius: 4px;
                 padding: 8px;
                 background-color: #ffffff;
+                color: #212121;
                 font-size: 13px;
+                font-weight: 500;
+                selection-background-color: #2196f3;
+                selection-color: #ffffff;
             }
             QLineEdit:focus {
                 border-color: #2196f3;
+                color: #212121;
             }
             QComboBox {
                 border: 2px solid #e0e0e0;
                 border-radius: 4px;
                 padding: 8px;
                 background-color: #ffffff;
+                color: #212121;
                 font-size: 13px;
+                font-weight: 500;
                 min-width: 100px;
             }
             QComboBox:focus {
                 border-color: #2196f3;
+                color: #212121;
             }
             QComboBox::drop-down {
                 border: none;
@@ -188,18 +197,20 @@ class AccountDialog(QDialog):
             }
             QPushButton {
                 background-color: #2196f3;
-                color: white;
+                color: #ffffff;
                 border: none;
                 border-radius: 4px;
                 padding: 10px 20px;
-                font-weight: 500;
+                font-weight: 600;
                 font-size: 13px;
             }
             QPushButton:hover {
                 background-color: #1976d2;
+                color: #ffffff;
             }
             QPushButton:pressed {
                 background-color: #1565c0;
+                color: #ffffff;
             }
             QDialogButtonBox QPushButton {
                 min-width: 80px;
@@ -329,18 +340,22 @@ class SettingsDialog(QDialog):
                 background-color: #fafafa;
             }
             QLabel {
-                color: #333333;
-                font-weight: 500;
+                color: #212121;
+                font-weight: 600;
+                font-size: 13px;
             }
             QLineEdit {
                 border: 2px solid #e0e0e0;
                 border-radius: 4px;
                 padding: 8px;
                 background-color: #ffffff;
+                color: #212121;
                 font-size: 13px;
+                font-weight: 500;
             }
             QLineEdit:focus {
                 border-color: #2196f3;
+                color: #212121;
             }
             QLineEdit:read-only {
                 background-color: #f5f5f5;

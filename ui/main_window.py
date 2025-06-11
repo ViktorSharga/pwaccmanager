@@ -110,18 +110,22 @@ class MainWindow(QMainWindow):
             }
             QToolBar QToolButton {
                 background-color: #ffffff;
+                color: #212121;
                 border: 1px solid #d0d0d0;
                 border-radius: 4px;
                 padding: 6px 12px;
                 margin: 2px;
-                font-weight: 500;
+                font-weight: 600;
+                font-size: 13px;
             }
             QToolBar QToolButton:hover {
                 background-color: #e3f2fd;
                 border-color: #2196f3;
+                color: #1976d2;
             }
             QToolBar QToolButton:pressed {
                 background-color: #bbdefb;
+                color: #0d47a1;
             }
             QStatusBar {
                 background-color: #f5f5f5;
@@ -370,7 +374,7 @@ class MainWindow(QMainWindow):
         header.resizeSection(7, 120)  # Actions
         
         # Set row height to accommodate buttons
-        self.table.verticalHeader().setDefaultSectionSize(28)
+        self.table.verticalHeader().setDefaultSectionSize(22)
         
         # Hide row numbers/vertical header
         self.table.verticalHeader().setVisible(False)
@@ -444,7 +448,7 @@ class MainWindow(QMainWindow):
         
         # Play button
         play_btn = QPushButton("▶")
-        play_btn.setFixedSize(24, 20)
+        play_btn.setFixedSize(20, 18)
         play_btn.setToolTip("Launch game")
         play_btn.setStyleSheet("""
             QPushButton {
@@ -452,9 +456,11 @@ class MainWindow(QMainWindow):
                 color: #ffffff;
                 border: 1px solid #1b5e20;
                 border-radius: 2px;
-                font-size: 11px;
+                font-size: 9px;
                 font-weight: 900;
                 font-family: Arial, sans-serif;
+                margin: 0px;
+                padding: 0px;
             }
             QPushButton:hover {
                 background-color: #388e3c;
@@ -470,7 +476,7 @@ class MainWindow(QMainWindow):
         
         # Kill button
         kill_btn = QPushButton("✖")
-        kill_btn.setFixedSize(24, 20)
+        kill_btn.setFixedSize(20, 18)
         kill_btn.setToolTip("Close game")
         kill_btn.setStyleSheet("""
             QPushButton {
@@ -478,9 +484,11 @@ class MainWindow(QMainWindow):
                 color: #ffffff;
                 border: 1px solid #b71c1c;
                 border-radius: 2px;
-                font-size: 11px;
+                font-size: 9px;
                 font-weight: 900;
                 font-family: Arial, sans-serif;
+                margin: 0px;
+                padding: 0px;
             }
             QPushButton:hover {
                 background-color: #f44336;
@@ -496,7 +504,7 @@ class MainWindow(QMainWindow):
         
         # Menu button
         menu_btn = QPushButton("⋮")
-        menu_btn.setFixedSize(24, 20)
+        menu_btn.setFixedSize(20, 18)
         menu_btn.setToolTip("More options")
         menu_btn.setStyleSheet("""
             QPushButton {
@@ -504,9 +512,11 @@ class MainWindow(QMainWindow):
                 color: #ffffff;
                 border: 1px solid #0d47a1;
                 border-radius: 2px;
-                font-size: 13px;
+                font-size: 10px;
                 font-weight: 900;
                 font-family: Arial, sans-serif;
+                margin: 0px;
+                padding: 0px;
             }
             QPushButton:hover {
                 background-color: #2196f3;
