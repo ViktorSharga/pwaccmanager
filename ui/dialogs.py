@@ -25,6 +25,7 @@ class AccountDialog(QDialog):
         self.setMinimumWidth(400)
         
         self.setup_ui()
+        self.setup_styling()
         
         if account:
             self.load_account_data()
@@ -142,6 +143,68 @@ class AccountDialog(QDialog):
     def get_account(self):
         """Get the account object"""
         return self.account
+    
+    def setup_styling(self):
+        """Apply modern styling to the dialog"""
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #fafafa;
+            }
+            QLabel {
+                color: #333333;
+                font-weight: 500;
+            }
+            QLineEdit {
+                border: 2px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border-color: #2196f3;
+            }
+            QComboBox {
+                border: 2px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #ffffff;
+                font-size: 13px;
+                min-width: 100px;
+            }
+            QComboBox:focus {
+                border-color: #2196f3;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #666666;
+                margin-right: 5px;
+            }
+            QPushButton {
+                background-color: #2196f3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 10px 20px;
+                font-weight: 500;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+            QPushButton:pressed {
+                background-color: #1565c0;
+            }
+            QDialogButtonBox QPushButton {
+                min-width: 80px;
+            }
+        """)
 
 
 class SettingsDialog(QDialog):
@@ -156,6 +219,7 @@ class SettingsDialog(QDialog):
         self.setMinimumWidth(500)
         
         self.setup_ui()
+        self.setup_styling()
         self.load_settings()
     
     def setup_ui(self):
@@ -257,3 +321,58 @@ class SettingsDialog(QDialog):
         self.settings_manager.set_game_folder(folder)
         self.settings_manager.set_launch_delay(self.delay_spinbox.value())
         self.accept()
+    
+    def setup_styling(self):
+        """Apply modern styling to the dialog"""
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #fafafa;
+            }
+            QLabel {
+                color: #333333;
+                font-weight: 500;
+            }
+            QLineEdit {
+                border: 2px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border-color: #2196f3;
+            }
+            QLineEdit:read-only {
+                background-color: #f5f5f5;
+                color: #666666;
+            }
+            QSpinBox {
+                border: 2px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #ffffff;
+                font-size: 13px;
+                min-width: 80px;
+            }
+            QSpinBox:focus {
+                border-color: #2196f3;
+            }
+            QPushButton {
+                background-color: #2196f3;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 10px 20px;
+                font-weight: 500;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+            QPushButton:pressed {
+                background-color: #1565c0;
+            }
+            QDialogButtonBox QPushButton {
+                min-width: 80px;
+            }
+        """)

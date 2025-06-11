@@ -77,7 +77,12 @@ class MainWindow(QMainWindow):
         
         # Create table
         self.create_table()
+        
+        # Create welcome screen
+        self.create_welcome_screen()
+        
         layout.addWidget(self.table)
+        layout.addWidget(self.welcome_widget)
         
         # Status bar
         self.status_bar = QStatusBar()
@@ -86,6 +91,64 @@ class MainWindow(QMainWindow):
         
         # Set minimum size
         self.setMinimumSize(800, 400)
+        
+        # Apply modern theme to the main window
+        self.setStyleSheet("""
+            QMainWindow {
+                background-color: #fafafa;
+            }
+            QToolBar {
+                background-color: #ffffff;
+                border: 1px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 4px;
+                spacing: 6px;
+            }
+            QToolBar QToolButton {
+                background-color: #ffffff;
+                border: 1px solid #d0d0d0;
+                border-radius: 4px;
+                padding: 6px 12px;
+                margin: 2px;
+                font-weight: 500;
+            }
+            QToolBar QToolButton:hover {
+                background-color: #e3f2fd;
+                border-color: #2196f3;
+            }
+            QToolBar QToolButton:pressed {
+                background-color: #bbdefb;
+            }
+            QStatusBar {
+                background-color: #f5f5f5;
+                border-top: 1px solid #e0e0e0;
+                color: #666666;
+                font-size: 12px;
+            }
+            QCheckBox {
+                spacing: 6px;
+                font-weight: 500;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #d0d0d0;
+                border-radius: 3px;
+                background-color: #ffffff;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #2196f3;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #2196f3;
+                border-color: #2196f3;
+                image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMC42IDEuNEw0LjMgNy43TDEuNCA0LjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=);
+            }
+            QLabel {
+                color: #333333;
+                font-weight: 500;
+            }
+        """)
     
     def create_toolbar(self):
         """Create the toolbar"""
@@ -141,6 +204,91 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(QLabel("Select All:"))
         toolbar.addWidget(self.master_checkbox)
     
+    def create_welcome_screen(self):
+        """Create welcome screen for when no accounts are loaded"""
+        self.welcome_widget = QWidget()
+        welcome_layout = QVBoxLayout()
+        welcome_layout.setAlignment(Qt.AlignCenter)
+        
+        # Welcome message
+        welcome_label = QLabel("Welcome to Perfect World Account Manager")
+        welcome_label.setAlignment(Qt.AlignCenter)
+        welcome_label.setStyleSheet("""
+            QLabel {
+                font-size: 24px;
+                font-weight: bold;
+                color: #333333;
+                margin: 20px;
+            }
+        """)
+        welcome_layout.addWidget(welcome_label)
+        
+        # Instructions
+        instructions = QLabel("""
+        Get started by:
+        • Adding your first account using the "Add Account" button
+        • Importing accounts from a JSON file
+        • Scanning your game folder for existing batch files
+        • Configuring your game folder in Settings
+        """)
+        instructions.setAlignment(Qt.AlignCenter)
+        instructions.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #666666;
+                line-height: 1.6;
+                margin: 10px;
+            }
+        """)
+        welcome_layout.addWidget(instructions)
+        
+        # Quick action buttons
+        button_layout = QHBoxLayout()
+        button_layout.setAlignment(Qt.AlignCenter)
+        
+        add_button = QPushButton("Add First Account")
+        add_button.clicked.connect(self.add_account)
+        add_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196f3;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 12px 24px;
+                font-size: 14px;
+                font-weight: 500;
+                margin: 5px;
+            }
+            QPushButton:hover {
+                background-color: #1976d2;
+            }
+        """)
+        button_layout.addWidget(add_button)
+        
+        settings_button = QPushButton("Open Settings")
+        settings_button.clicked.connect(self.open_settings)
+        settings_button.setStyleSheet("""
+            QPushButton {
+                background-color: #ffffff;
+                color: #2196f3;
+                border: 2px solid #2196f3;
+                border-radius: 6px;
+                padding: 12px 24px;
+                font-size: 14px;
+                font-weight: 500;
+                margin: 5px;
+            }
+            QPushButton:hover {
+                background-color: #e3f2fd;
+            }
+        """)
+        button_layout.addWidget(settings_button)
+        
+        welcome_layout.addLayout(button_layout)
+        
+        self.welcome_widget.setLayout(welcome_layout)
+        self.welcome_widget.hide()  # Initially hidden
+    
     def create_table(self):
         """Create the accounts table"""
         self.table = QTableWidget()
@@ -161,13 +309,36 @@ class MainWindow(QMainWindow):
         # Connect cell click events for clipboard copy
         self.table.cellClicked.connect(self.on_table_cell_clicked)
         
-        # Add styling for the table
+        # Add modern styling for the table
         self.table.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #e0e0e0;
+                background-color: #ffffff;
+                alternate-background-color: #f9f9f9;
+                selection-background-color: #e3f2fd;
+                border: 1px solid #d0d0d0;
+                border-radius: 4px;
+            }
             QTableWidget::item {
-                padding: 5px;
+                padding: 8px;
+                border: none;
             }
             QTableWidget::item:hover {
-                background-color: #f0f0f0;
+                background-color: #f0f8ff;
+            }
+            QTableWidget::item:selected {
+                background-color: #2196f3;
+                color: white;
+            }
+            QTableWidget QHeaderView::section {
+                background-color: #f5f5f5;
+                border: 1px solid #d0d0d0;
+                padding: 8px;
+                font-weight: bold;
+                color: #333333;
+            }
+            QTableWidget QHeaderView::section:hover {
+                background-color: #e0e0e0;
             }
         """)
         
@@ -195,6 +366,7 @@ class MainWindow(QMainWindow):
         
         self.update_status_bar()
         self.update_master_checkbox_state()
+        self.update_welcome_screen_visibility()
     
     def add_account_to_table(self, account):
         """Add an account to the table"""
@@ -263,7 +435,7 @@ class MainWindow(QMainWindow):
         menu_btn.setToolTip("More options")
         
         # Create menu and connect it properly
-        menu = QMenu()
+        menu = QMenu(menu_btn)
         edit_action = menu.addAction("Edit")
         delete_action = menu.addAction("Delete")
         
@@ -271,7 +443,8 @@ class MainWindow(QMainWindow):
         edit_action.triggered.connect(partial(self.edit_account, row))
         delete_action.triggered.connect(partial(self.delete_account, row))
         
-        menu_btn.setMenu(menu)
+        # Connect button click to show menu
+        menu_btn.clicked.connect(lambda: menu.exec_(QCursor.pos()))
         actions_layout.addWidget(menu_btn)
         
         actions_widget.setLayout(actions_layout)
@@ -298,6 +471,7 @@ class MainWindow(QMainWindow):
                 self.add_account_to_table(account)
                 self.update_status_bar()
                 self.update_master_checkbox_state()
+                self.update_welcome_screen_visibility()
             else:
                 QMessageBox.warning(self, "Error", "Failed to add account.")
     
@@ -365,6 +539,7 @@ class MainWindow(QMainWindow):
                 self.table.removeRow(row)
                 self.update_status_bar()
                 self.update_master_checkbox_state()
+                self.update_welcome_screen_visibility()
     
     def launch_account(self, row):
         """Launch a single account"""
@@ -529,6 +704,7 @@ class MainWindow(QMainWindow):
         
         self.update_status_bar()
         self.update_master_checkbox_state()
+        self.update_welcome_screen_visibility()
         QMessageBox.information(self, "Scan Complete", 
                               f"Found {len(accounts_data)} account(s).\n"
                               f"Added {added} new account(s).")
@@ -843,6 +1019,7 @@ class MainWindow(QMainWindow):
             # Update UI
             self.update_status_bar()
             self.update_master_checkbox_state()
+            self.update_welcome_screen_visibility()
             
             # Show results
             message = f"Import completed:\n"
@@ -960,6 +1137,15 @@ class MainWindow(QMainWindow):
         """Update the status bar"""
         count = self.table.rowCount()
         self.status_bar.showMessage(f"{count} account(s) loaded")
+    
+    def update_welcome_screen_visibility(self):
+        """Show welcome screen if no accounts, hide if accounts exist"""
+        if self.table.rowCount() == 0:
+            self.table.hide()
+            self.welcome_widget.show()
+        else:
+            self.welcome_widget.hide()
+            self.table.show()
     
     def check_game_folder(self):
         """Check if game folder is set"""
