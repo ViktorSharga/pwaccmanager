@@ -884,12 +884,15 @@ class MainWindow(QMainWindow):
     
     def select_all_rows(self, select):
         """Select or unselect all rows"""
+        # Block signals to prevent recursive updates
         for row in range(self.table.rowCount()):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
                 checkbox = checkbox_widget.findChild(QCheckBox)
                 if checkbox:
+                    checkbox.blockSignals(True)
                     checkbox.setChecked(select)
+                    checkbox.blockSignals(False)
     
     def update_master_checkbox_state(self):
         """Update master checkbox state based on individual checkboxes"""
@@ -897,9 +900,14 @@ class MainWindow(QMainWindow):
             return
             
         total_rows = self.table.rowCount()
+        self.master_checkbox.blockSignals(True)
         if total_rows == 0:
             self.master_checkbox.setCheckState(Qt.Unchecked)
+            self.master_checkbox.setEnabled(False)
+            self.master_checkbox.blockSignals(False)
             return
+        else:
+            self.master_checkbox.setEnabled(True)
         
         checked_count = 0
         for row in range(total_rows):
@@ -909,13 +917,15 @@ class MainWindow(QMainWindow):
                 if checkbox and checkbox.isChecked():
                     checked_count += 1
         
-        # Set master checkbox state
+        # Set master checkbox state (block signals to prevent recursion)
+        self.master_checkbox.blockSignals(True)
         if checked_count == 0:
             self.master_checkbox.setCheckState(Qt.Unchecked)
         elif checked_count == total_rows:
             self.master_checkbox.setCheckState(Qt.Checked)
         else:
             self.master_checkbox.setCheckState(Qt.PartiallyChecked)
+        self.master_checkbox.blockSignals(False)
     
     def export_accounts(self):
         """Export accounts to JSON file"""
