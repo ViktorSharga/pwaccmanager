@@ -1,5 +1,7 @@
 """Main application window"""
 
+from functools import partial
+
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QTableWidget, QTableWidgetItem,
                              QHeaderView, QMessageBox, QStatusBar, QMenu,
@@ -185,14 +187,14 @@ class MainWindow(QMainWindow):
         play_btn = QPushButton("▶")
         play_btn.setFixedSize(30, 25)
         play_btn.setToolTip("Launch game")
-        play_btn.clicked.connect(lambda: self.launch_account(row))
+        play_btn.clicked.connect(partial(self.launch_account, row))
         actions_layout.addWidget(play_btn)
         
         # Kill button
         kill_btn = QPushButton("✖")
         kill_btn.setFixedSize(30, 25)
         kill_btn.setToolTip("Close game")
-        kill_btn.clicked.connect(lambda: self.close_account(row))
+        kill_btn.clicked.connect(partial(self.close_account, row))
         actions_layout.addWidget(kill_btn)
         
         # Menu button
@@ -200,11 +202,14 @@ class MainWindow(QMainWindow):
         menu_btn.setFixedSize(30, 25)
         menu_btn.setToolTip("More options")
         
+        # Create menu and connect it properly
         menu = QMenu()
         edit_action = menu.addAction("Edit")
-        edit_action.triggered.connect(lambda: self.edit_account(row))
         delete_action = menu.addAction("Delete")
-        delete_action.triggered.connect(lambda: self.delete_account(row))
+        
+        # Use partial to properly bind the row value
+        edit_action.triggered.connect(partial(self.edit_account, row))
+        delete_action.triggered.connect(partial(self.delete_account, row))
         
         menu_btn.setMenu(menu)
         actions_layout.addWidget(menu_btn)
