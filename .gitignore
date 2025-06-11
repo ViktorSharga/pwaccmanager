@@ -78,3 +78,9 @@ docs/_build/
 # Personal files
 *.bat
 *.log
+
+# Internal instruction files (not for public repo)
+*.pdf
+*tasks.html
+*docs.html
+*guide.html
