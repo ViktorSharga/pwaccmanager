@@ -935,29 +935,49 @@ class MainWindow(QMainWindow):
     
     def on_row_checkbox_changed(self):
         """Handle individual row checkbox changes"""
-        self.update_master_checkbox_state()
+        # Small delay to ensure all signals are processed
+        QTimer.singleShot(10, self.update_master_checkbox_state)
     
     def on_master_checkbox_changed(self, state):
         """Handle master checkbox state changes"""
+        print(f"Master checkbox clicked, state: {state}")
+        
+        # Only respond to checked/unchecked, not partially checked
         if state == Qt.Checked:
-            # Select all
-            self.select_all_rows(True)
+            print("Setting all checkboxes to checked")
+            self.set_all_checkboxes(True)
         elif state == Qt.Unchecked:
-            # Unselect all
-            self.select_all_rows(False)
-        # Indeterminate state doesn't trigger action
+            print("Setting all checkboxes to unchecked")
+            self.set_all_checkboxes(False)
+        # Ignore partially checked state - it's just for display
     
-    def select_all_rows(self, select):
-        """Select or unselect all rows"""
-        # Block signals to prevent recursive updates
-        for row in range(self.table.rowCount()):
+    def set_all_checkboxes(self, checked):
+        """Set all row checkboxes to checked or unchecked state"""
+        row_count = self.table.rowCount()
+        print(f"Setting {row_count} checkboxes to {checked}")
+        
+        # Temporarily disconnect signals to prevent recursion
+        self.master_checkbox.stateChanged.disconnect()
+        
+        for row in range(row_count):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
-                checkbox = checkbox_widget.findChild(QCheckBox)
+                # Find checkbox in the widget
+                checkbox = None
+                for child in checkbox_widget.findChildren(QCheckBox):
+                    checkbox = child
+                    break
+                
                 if checkbox:
-                    checkbox.blockSignals(True)
-                    checkbox.setChecked(select)
-                    checkbox.blockSignals(False)
+                    # Temporarily disconnect to prevent individual signals
+                    checkbox.stateChanged.disconnect()
+                    checkbox.setChecked(checked)
+                    # Reconnect the signal
+                    checkbox.stateChanged.connect(self.on_row_checkbox_changed)
+        
+        # Reconnect master checkbox signal
+        self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
+        print(f"Finished setting all checkboxes")
     
     def update_master_checkbox_state(self):
         """Update master checkbox state based on individual checkboxes"""
@@ -965,8 +985,9 @@ class MainWindow(QMainWindow):
             return
             
         total_rows = self.table.rowCount()
-        self.master_checkbox.blockSignals(True)
+        
         if total_rows == 0:
+            self.master_checkbox.blockSignals(True)
             self.master_checkbox.setCheckState(Qt.Unchecked)
             self.master_checkbox.setEnabled(False)
             self.master_checkbox.blockSignals(False)
@@ -974,15 +995,21 @@ class MainWindow(QMainWindow):
         else:
             self.master_checkbox.setEnabled(True)
         
+        # Count checked boxes
         checked_count = 0
         for row in range(total_rows):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
-                checkbox = checkbox_widget.findChild(QCheckBox)
+                # Find checkbox in the widget
+                checkbox = None
+                for child in checkbox_widget.findChildren(QCheckBox):
+                    checkbox = child
+                    break
+                
                 if checkbox and checkbox.isChecked():
                     checked_count += 1
         
-        # Set master checkbox state (block signals to prevent recursion)
+        # Update master checkbox state without triggering signals
         self.master_checkbox.blockSignals(True)
         if checked_count == 0:
             self.master_checkbox.setCheckState(Qt.Unchecked)
@@ -991,6 +1018,8 @@ class MainWindow(QMainWindow):
         else:
             self.master_checkbox.setCheckState(Qt.PartiallyChecked)
         self.master_checkbox.blockSignals(False)
+        
+        print(f"Updated master checkbox: {checked_count}/{total_rows} checked")
     
     def export_accounts(self):
         """Export accounts to JSON file"""
