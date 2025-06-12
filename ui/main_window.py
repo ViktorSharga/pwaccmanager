@@ -438,8 +438,8 @@ class MainWindow(QMainWindow):
         header.resizeSection(6, 60)  # Server
         header.resizeSection(7, 120)  # Actions
         
-        # Set row height to accommodate buttons
-        self.table.verticalHeader().setDefaultSectionSize(22)
+        # Set row height to accommodate buttons (18px button + 6px padding)
+        self.table.verticalHeader().setDefaultSectionSize(24)
         
         # Hide row numbers/vertical header
         self.table.verticalHeader().setVisible(False)
