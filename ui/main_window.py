@@ -464,13 +464,26 @@ class MainWindow(QMainWindow):
     
     def place_header_checkbox(self):
         """Place the master checkbox in the header after table is created"""
+        # Clean up any existing master checkbox
+        if hasattr(self, 'master_checkbox') and self.master_checkbox:
+            self.master_checkbox.deleteLater()
+            
         # Create the checkbox widget
         self.master_checkbox = QCheckBox()
         self.master_checkbox.setToolTip("Select/Unselect all accounts")
         self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
         
+        # Set a fixed size for the checkbox
+        self.master_checkbox.setFixedSize(20, 20)
+        
         # Style the master checkbox
         self.master_checkbox.setStyleSheet("""
+            QCheckBox {
+                background-color: transparent;
+                spacing: 0px;
+                margin: 0px;
+                padding: 0px;
+            }
             QCheckBox::indicator {
                 width: 16px;
                 height: 16px;
@@ -491,7 +504,7 @@ class MainWindow(QMainWindow):
         # Position the checkbox over the header
         header = self.table.horizontalHeader()
         if header:
-            # Calculate position for first column header
+            # Calculate position for first column header - center it
             x = header.sectionPosition(0) + (header.sectionSize(0) - 20) // 2
             y = (header.height() - 20) // 2
             
@@ -499,6 +512,18 @@ class MainWindow(QMainWindow):
             self.master_checkbox.setParent(header)
             self.master_checkbox.move(x, y)
             self.master_checkbox.show()
+            self.master_checkbox.raise_()  # Ensure it's on top
+            
+    
+    def reposition_master_checkbox(self):
+        """Reposition the master checkbox when table geometry changes"""
+        if hasattr(self, 'master_checkbox') and self.master_checkbox:
+            header = self.table.horizontalHeader()
+            if header:
+                x = header.sectionPosition(0) + (header.sectionSize(0) - 20) // 2
+                y = (header.height() - 20) // 2
+                self.master_checkbox.move(x, y)
+                self.master_checkbox.raise_()
     
     def load_accounts(self):
         """Load accounts into the table"""
@@ -515,6 +540,8 @@ class MainWindow(QMainWindow):
         
         self.update_status_bar()
         self.update_welcome_screen_visibility()
+        # Update master checkbox state
+        QTimer.singleShot(100, self.update_master_checkbox_state)
     
     def add_account_to_table(self, account):
         """Add an account to the table"""
@@ -766,19 +793,20 @@ class MainWindow(QMainWindow):
         
         account = login_item.data(Qt.UserRole)
         
-        reply = self.show_message(
-            "question", "Delete Account",
-            f"Are you sure you want to delete the account '{account.login}'?",
-            QMessageBox.Yes | QMessageBox.No
-        )
+        # Show custom delete confirmation dialog
+        result = self.show_delete_confirmation_dialog(account.login)
+        if result is None:  # User cancelled
+            return
         
-        if reply == QMessageBox.Yes:
+        confirm_delete, delete_batch_file = result
+        
+        if confirm_delete:
             # Terminate if running
             if self.game_launcher and self.game_launcher.is_account_running(account.login):
                 self.game_launcher.terminate_account(account.login)
             
-            # Delete batch file
-            if self.batch_generator:
+            # Delete batch file if requested
+            if delete_batch_file and self.batch_generator:
                 self.batch_generator.delete_batch_file(account.login)
             
             # Delete from manager
@@ -787,6 +815,127 @@ class MainWindow(QMainWindow):
                 self.update_status_bar()
                 self.update_master_checkbox_state()
                 self.update_welcome_screen_visibility()
+                
+                # Show success message
+                batch_msg = " and batch file" if delete_batch_file else ""
+                self.show_message("information", "Account Deleted", 
+                                 f"Account '{account.login}'{batch_msg} deleted successfully.")
+            else:
+                self.show_message("warning", "Error", 
+                                 f"Failed to delete account '{account.login}'.")
+    
+    def show_delete_confirmation_dialog(self, login):
+        """Show custom delete confirmation dialog with batch file option"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Delete Account")
+        dialog.setModal(True)
+        dialog.setMinimumWidth(400)
+        
+        # Set dialog icon
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+        if os.path.exists(icon_path):
+            dialog.setWindowIcon(QIcon(icon_path))
+        
+        layout = QVBoxLayout()
+        
+        # Main message
+        message_label = QLabel(f"Are you sure you want to delete the account '{login}'?")
+        message_label.setWordWrap(True)
+        message_label.setStyleSheet("""
+            QLabel {
+                color: #212121;
+                font-size: 14px;
+                font-weight: 600;
+                margin: 10px 0px;
+            }
+        """)
+        layout.addWidget(message_label)
+        
+        # Checkbox for batch file deletion
+        batch_checkbox = QCheckBox("Also delete associated batch file (.bat)")
+        batch_checkbox.setChecked(True)  # Default to checked
+        batch_checkbox.setStyleSheet("""
+            QCheckBox {
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                margin: 10px 0px;
+                spacing: 6px;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #d0d0d0;
+                border-radius: 3px;
+                background-color: #ffffff;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #2196f3;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #2196f3;
+                border-color: #2196f3;
+                image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMC42IDEuNEw0LjMgNy43TDEuNCA0LjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=);
+            }
+        """)
+        layout.addWidget(batch_checkbox)
+        
+        # Button box
+        button_box = QDialogButtonBox(QDialogButtonBox.Yes | QDialogButtonBox.No)
+        button_box.button(QDialogButtonBox.Yes).setText("Delete")
+        button_box.button(QDialogButtonBox.No).setText("Cancel")
+        
+        # Style the buttons
+        button_box.setStyleSheet("""
+            QDialogButtonBox QPushButton {
+                background-color: #2196f3;
+                color: #ffffff;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 600;
+                font-size: 13px;
+                min-width: 80px;
+                margin: 2px;
+            }
+            QDialogButtonBox QPushButton:hover {
+                background-color: #1976d2;
+            }
+            QDialogButtonBox QPushButton:pressed {
+                background-color: #1565c0;
+            }
+            QDialogButtonBox QPushButton[text="Delete"] {
+                background-color: #d32f2f;
+            }
+            QDialogButtonBox QPushButton[text="Delete"]:hover {
+                background-color: #f44336;
+            }
+            QDialogButtonBox QPushButton[text="Delete"]:pressed {
+                background-color: #b71c1c;
+            }
+        """)
+        
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+        
+        # Set dialog styling
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #fafafa;
+                border: 1px solid #d0d0d0;
+                border-radius: 8px;
+            }
+        """)
+        
+        dialog.setLayout(layout)
+        
+        # Execute dialog
+        result = dialog.exec()
+        if result == QDialog.Accepted:
+            return (True, batch_checkbox.isChecked())
+        else:
+            return None
     
     def launch_account(self, row):
         """Launch a single account"""
@@ -853,8 +1002,8 @@ class MainWindow(QMainWindow):
         
         selected_rows = self.get_selected_rows()
         if not selected_rows:
-            QMessageBox.information(self, "No Selection", 
-                                  "Please select accounts to launch.")
+            self.show_message("information", "No Selection", 
+                             "Please select accounts to launch.")
             return
         
         # Prepare launch data for queuing
@@ -874,8 +1023,8 @@ class MainWindow(QMainWindow):
                         launch_data.append((account.login, batch_file, row))
         
         if not launch_data:
-            QMessageBox.information(self, "Nothing to Launch", 
-                                  "No accounts need to be launched (already running or errors).")
+            self.show_message("information", "Nothing to Launch", 
+                             "No accounts need to be launched (already running or errors).")
             return
         
         # Queue all launches with callback
@@ -885,8 +1034,8 @@ class MainWindow(QMainWindow):
             self.game_launcher.queue_launch(login, batch_file, callback)
             queued += 1
         
-        QMessageBox.information(self, "Launch Queued", 
-                              f"Queued {queued} account(s) for launch with delay.")
+        self.show_message("information", "Launch Queued", 
+                         f"Queued {queued} account(s) for launch with delay.")
     
     def close_selected(self):
         """Close all selected accounts"""
@@ -895,8 +1044,8 @@ class MainWindow(QMainWindow):
         
         selected_rows = self.get_selected_rows()
         if not selected_rows:
-            QMessageBox.information(self, "No Selection", 
-                                  "Please select accounts to close.")
+            self.show_message("information", "No Selection", 
+                             "Please select accounts to close.")
             return
         
         closed = 0
@@ -909,8 +1058,8 @@ class MainWindow(QMainWindow):
                     self.update_row_status(row, False)
                     closed += 1
         
-        QMessageBox.information(self, "Close Complete", 
-                              f"Closed {closed} account(s).")
+        self.show_message("information", "Close Complete", 
+                         f"Closed {closed} account(s).")
     
     def scan_folder(self):
         """Scan game folder for batch files"""
@@ -920,8 +1069,8 @@ class MainWindow(QMainWindow):
         accounts_data = self.batch_generator.scan_folder()
         
         if not accounts_data:
-            QMessageBox.information(self, "Scan Complete", 
-                                  "No account batch files found.")
+            self.show_message("information", "Scan Complete", 
+                             "No account batch files found.")
             return
         
         # Filter out existing accounts
@@ -929,8 +1078,8 @@ class MainWindow(QMainWindow):
         new_accounts = [acc for acc in accounts_data if acc['login'] not in existing_logins]
         
         if not new_accounts:
-            QMessageBox.information(self, "Scan Complete", 
-                                  "No new accounts found. All found accounts already exist.")
+            self.show_message("information", "Scan Complete", 
+                             "No new accounts found. All found accounts already exist.")
             return
         
         # Add new accounts
@@ -951,9 +1100,9 @@ class MainWindow(QMainWindow):
         
         self.update_status_bar()
         self.update_welcome_screen_visibility()
-        QMessageBox.information(self, "Scan Complete", 
-                              f"Found {len(accounts_data)} account(s).\n"
-                              f"Added {added} new account(s).")
+        self.show_message("information", "Scan Complete", 
+                         f"Found {len(accounts_data)} account(s).\n"
+                         f"Added {added} new account(s).")
     
     def open_settings(self):
         """Open settings dialog"""
@@ -1017,8 +1166,8 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"{field_name} copied to clipboard", 2000)
             
         except Exception as e:
-            QMessageBox.warning(self, "Clipboard Error", 
-                              f"Failed to copy {field_name.lower()} to clipboard: {e}")
+            self.show_message("warning", "Clipboard Error", 
+                             f"Failed to copy {field_name.lower()} to clipboard: {e}")
     
     def on_master_checkbox_changed(self, state):
         """Handle master checkbox in header - simple implementation"""
@@ -1037,7 +1186,10 @@ class MainWindow(QMainWindow):
                 # Find the checkbox in the widget
                 checkbox = checkbox_widget.findChild(QCheckBox)
                 if checkbox:
+                    # Block signals to prevent infinite recursion
+                    checkbox.blockSignals(True)
                     checkbox.setChecked(checked)
+                    checkbox.blockSignals(False)
     
     def update_master_checkbox_state(self):
         """Update master checkbox state based on row checkboxes"""
@@ -1070,7 +1222,7 @@ class MainWindow(QMainWindow):
         """Export accounts to JSON file"""
         accounts = self.account_manager.get_all_accounts()
         if not accounts:
-            QMessageBox.information(self, "No Accounts", "No accounts to export.")
+            self.show_message("information", "No Accounts", "No accounts to export.")
             return
         
         # Show export options dialog
@@ -1204,14 +1356,14 @@ class MainWindow(QMainWindow):
             
             # Validate JSON structure
             if not self.validate_import_data(import_data):
-                QMessageBox.critical(self, "Invalid File", 
-                                   "The selected file is not a valid account export file.")
+                self.show_message("critical", "Invalid File", 
+                                 "The selected file is not a valid account export file.")
                 return
             
             accounts_data = import_data.get("accounts", [])
             if not accounts_data:
-                QMessageBox.information(self, "No Accounts", 
-                                      "No accounts found in the import file.")
+                self.show_message("information", "No Accounts", 
+                                 "No accounts found in the import file.")
                 return
             
             # Show import preview dialog
@@ -1272,14 +1424,14 @@ class MainWindow(QMainWindow):
             if error_count > 0:
                 message += f"• Errors: {error_count} account(s)\n"
             
-            QMessageBox.information(self, "Import Complete", message)
+            self.show_message("information", "Import Complete", message)
             
         except json.JSONDecodeError:
-            QMessageBox.critical(self, "Invalid File", 
-                               "The selected file is not a valid JSON file.")
+            self.show_message("critical", "Invalid File", 
+                             "The selected file is not a valid JSON file.")
         except Exception as e:
-            QMessageBox.critical(self, "Import Error", 
-                               f"Failed to import accounts:\n{str(e)}")
+            self.show_message("critical", "Import Error", 
+                             f"Failed to import accounts:\n{str(e)}")
     
     def validate_import_data(self, data):
         """Validate import JSON data structure"""
@@ -1389,6 +1541,8 @@ class MainWindow(QMainWindow):
         else:
             self.welcome_widget.hide()
             self.table.show()
+            # Reposition master checkbox when table becomes visible
+            QTimer.singleShot(50, self.reposition_master_checkbox)
     
     def check_game_folder(self):
         """Check if game folder is set"""
