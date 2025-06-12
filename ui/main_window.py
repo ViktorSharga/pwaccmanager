@@ -438,8 +438,9 @@ class MainWindow(QMainWindow):
         header.resizeSection(6, 60)  # Server
         header.resizeSection(7, 120)  # Actions
         
-        # Set row height to accommodate buttons (18px button + 6px padding)
-        self.table.verticalHeader().setDefaultSectionSize(24)
+        # Set row height to accommodate buttons (24px button + 8px padding)
+        self.table.verticalHeader().setDefaultSectionSize(34)
+        self.table.verticalHeader().setMinimumSectionSize(34)
         
         # Hide row numbers/vertical header
         self.table.verticalHeader().setVisible(False)
@@ -471,8 +472,33 @@ class MainWindow(QMainWindow):
         
         # Checkbox
         checkbox = QCheckBox()
+        checkbox.setFixedSize(20, 20)
+        checkbox.setStyleSheet("""
+            QCheckBox {
+                spacing: 0px;
+                margin: 0px;
+                padding: 0px;
+            }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #d0d0d0;
+                border-radius: 3px;
+                background-color: #ffffff;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #2196f3;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #2196f3;
+                border-color: #2196f3;
+                image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMC42IDEuNEw0LjMgNy43TDEuNCA0LjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=);
+            }
+        """)
         checkbox.stateChanged.connect(self.on_row_checkbox_changed)
+        
         checkbox_widget = QWidget()
+        checkbox_widget.setFixedSize(30, 30)
         checkbox_layout = QHBoxLayout()
         checkbox_layout.addWidget(checkbox)
         checkbox_layout.setAlignment(Qt.AlignCenter)
@@ -508,12 +534,13 @@ class MainWindow(QMainWindow):
         
         # Actions
         actions_widget = QWidget()
+        actions_widget.setFixedHeight(30)
         actions_layout = QHBoxLayout()
-        actions_layout.setContentsMargins(5, 0, 5, 0)
+        actions_layout.setContentsMargins(5, 3, 5, 3)
         
         # Play button
         play_btn = QPushButton("▶")
-        play_btn.setFixedSize(20, 18)
+        play_btn.setFixedSize(24, 24)
         play_btn.setToolTip("Launch game")
         play_btn.setStyleSheet("""
             QPushButton {
@@ -541,7 +568,7 @@ class MainWindow(QMainWindow):
         
         # Kill button
         kill_btn = QPushButton("✖")
-        kill_btn.setFixedSize(20, 18)
+        kill_btn.setFixedSize(24, 24)
         kill_btn.setToolTip("Close game")
         kill_btn.setStyleSheet("""
             QPushButton {
@@ -569,7 +596,7 @@ class MainWindow(QMainWindow):
         
         # Menu button
         menu_btn = QPushButton("⋮")
-        menu_btn.setFixedSize(20, 18)
+        menu_btn.setFixedSize(24, 24)
         menu_btn.setToolTip("More options")
         menu_btn.setStyleSheet("""
             QPushButton {
