@@ -498,11 +498,12 @@ class MainWindow(QMainWindow):
         checkbox.stateChanged.connect(self.on_row_checkbox_changed)
         
         checkbox_widget = QWidget()
-        checkbox_widget.setFixedSize(30, 30)
-        checkbox_layout = QHBoxLayout()
+        checkbox_widget.setFixedHeight(32)
+        checkbox_layout = QVBoxLayout()
         checkbox_layout.addWidget(checkbox)
         checkbox_layout.setAlignment(Qt.AlignCenter)
         checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        checkbox_layout.setSpacing(0)
         checkbox_widget.setLayout(checkbox_layout)
         self.table.setCellWidget(row, 0, checkbox_widget)
         
@@ -510,6 +511,7 @@ class MainWindow(QMainWindow):
         login_item = QTableWidgetItem(account.login)
         login_item.setToolTip("Click to copy login to clipboard")
         login_item.setData(Qt.UserRole + 1, "login")  # Mark as login field
+        login_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         self.table.setItem(row, 1, login_item)
         
         # Password (masked, clickable for clipboard copy)
@@ -517,26 +519,36 @@ class MainWindow(QMainWindow):
         password_item.setData(Qt.UserRole, account.password)
         password_item.setData(Qt.UserRole + 1, "password")  # Mark as password field
         password_item.setToolTip("Click to copy password to clipboard")
+        password_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
         self.table.setItem(row, 2, password_item)
         
         # Character name
-        self.table.setItem(row, 3, QTableWidgetItem(account.character_name))
+        character_item = QTableWidgetItem(account.character_name)
+        character_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        self.table.setItem(row, 3, character_item)
         
         # Description
-        self.table.setItem(row, 4, QTableWidgetItem(account.description))
+        description_item = QTableWidgetItem(account.description)
+        description_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        self.table.setItem(row, 4, description_item)
         
         # Owner
-        self.table.setItem(row, 5, QTableWidgetItem(account.owner))
+        owner_item = QTableWidgetItem(account.owner)
+        owner_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignLeft)
+        self.table.setItem(row, 5, owner_item)
         
         # Server
         server_value = getattr(account, 'server', 'Main')
-        self.table.setItem(row, 6, QTableWidgetItem(server_value))
+        server_item = QTableWidgetItem(server_value)
+        server_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+        self.table.setItem(row, 6, server_item)
         
         # Actions
         actions_widget = QWidget()
-        actions_widget.setFixedHeight(30)
+        actions_widget.setFixedHeight(32)
         actions_layout = QHBoxLayout()
-        actions_layout.setContentsMargins(5, 3, 5, 3)
+        actions_layout.setContentsMargins(5, 0, 5, 0)
+        actions_layout.setAlignment(Qt.AlignCenter)
         
         # Play button
         play_btn = QPushButton("▶")
