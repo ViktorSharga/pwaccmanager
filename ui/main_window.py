@@ -500,10 +500,10 @@ class MainWindow(QMainWindow):
         # Try to set the widget for the first column header
         try:
             self.table.horizontalHeader().setSectionWidget(0, header_widget)
-            print("DEBUG: Master checkbox created as header widget")  # Debug
+            print("Master checkbox created as header widget")
         except AttributeError:
             # Fallback: Use a different approach
-            print("DEBUG: setSectionWidget not available, using alternative approach")  # Debug
+            print("setSectionWidget not available, using alternative approach")
             self.create_header_checkbox_alternative()
     
     def create_header_checkbox_alternative(self):
@@ -518,7 +518,7 @@ class MainWindow(QMainWindow):
         # Connect header click to toggle function
         header.sectionClicked.connect(self.on_header_section_clicked)
         
-        print("DEBUG: Alternative header checkbox created")  # Debug
+        print("Alternative header checkbox created")
     
     def update_header_checkbox_symbol(self):
         """Update the header checkbox symbol"""
@@ -526,11 +526,9 @@ class MainWindow(QMainWindow):
         columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
         columns[0] = symbol
         self.table.setHorizontalHeaderLabels(columns)
-        print(f"DEBUG: Header symbol updated to: {symbol}")  # Debug
     
     def on_header_section_clicked(self, section):
         """Handle header section clicks"""
-        print(f"DEBUG: Header section {section} clicked")  # Debug
         if section == 0:  # First column (checkbox column)
             self.master_checkbox_checked = not self.master_checkbox_checked
             self.update_header_checkbox_symbol()
@@ -1192,20 +1190,15 @@ class MainWindow(QMainWindow):
     
     def on_master_checkbox_changed(self, state):
         """Handle master checkbox in header - simple implementation"""
-        print(f"DEBUG: Master checkbox state changed to: {state}")  # Debug
         if state == Qt.Checked:
-            print("DEBUG: Checking all row checkboxes")  # Debug
             # Check all row checkboxes
             self.set_all_row_checkboxes(True)
         else:
-            print("DEBUG: Unchecking all row checkboxes")  # Debug
             # Uncheck all row checkboxes
             self.set_all_row_checkboxes(False)
     
     def set_all_row_checkboxes(self, checked):
         """Set all row checkboxes to the specified state"""
-        print(f"DEBUG: Setting all {self.table.rowCount()} row checkboxes to: {checked}")  # Debug
-        updated_count = 0
         for row in range(self.table.rowCount()):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
@@ -1216,12 +1209,6 @@ class MainWindow(QMainWindow):
                     checkbox.blockSignals(True)
                     checkbox.setChecked(checked)
                     checkbox.blockSignals(False)
-                    updated_count += 1
-                else:
-                    print(f"DEBUG: No checkbox found in row {row}")  # Debug
-            else:
-                print(f"DEBUG: No checkbox widget found in row {row}")  # Debug
-        print(f"DEBUG: Updated {updated_count} checkboxes")  # Debug
     
     def update_master_checkbox_state(self):
         """Update master checkbox state based on row checkboxes"""
@@ -1237,19 +1224,24 @@ class MainWindow(QMainWindow):
                     checked_count += 1
         
         # Update master checkbox state
-        if hasattr(self, 'master_checkbox') and self.master_checkbox:
-            # Standard checkbox approach
-            self.master_checkbox.blockSignals(True)
-            if checked_count == 0:
-                self.master_checkbox.setChecked(False)
-            elif checked_count == total_count:
-                self.master_checkbox.setChecked(True)
-            else:
-                # Partially checked - Qt doesn't support tristate for this use case, so uncheck
-                self.master_checkbox.setChecked(False)
-            self.master_checkbox.blockSignals(False)
-        elif hasattr(self, 'master_checkbox_checked'):
-            # Alternative symbol approach
+        try:
+            if hasattr(self, 'master_checkbox') and self.master_checkbox:
+                # Standard checkbox approach - try to access the checkbox
+                self.master_checkbox.blockSignals(True)
+                if checked_count == 0:
+                    self.master_checkbox.setChecked(False)
+                elif checked_count == total_count:
+                    self.master_checkbox.setChecked(True)
+                else:
+                    # Partially checked - Qt doesn't support tristate for this use case, so uncheck
+                    self.master_checkbox.setChecked(False)
+                self.master_checkbox.blockSignals(False)
+        except (RuntimeError, AttributeError):
+            # Checkbox was deleted or not accessible, fall back to alternative approach
+            pass
+            
+        # Alternative symbol approach (used when widget approach fails or isn't available)
+        if hasattr(self, 'master_checkbox_checked'):
             if checked_count == 0:
                 self.master_checkbox_checked = False
             elif checked_count == total_count:

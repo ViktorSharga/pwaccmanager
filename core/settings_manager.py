@@ -21,9 +21,16 @@ class SettingsManager:
                     settings = json.load(f)
                     print(f"Settings loaded from: {self.settings_file}")  # Keep this for verification
                     return settings
-            except Exception as e:
+            except (json.JSONDecodeError, Exception) as e:
                 print(f"Error loading settings: {e}")
-                pass
+                print(f"Backing up corrupted settings file and creating new one")
+                # Backup the corrupted file
+                try:
+                    backup_path = self.settings_file.with_suffix('.json.backup')
+                    self.settings_file.rename(backup_path)
+                    print(f"Corrupted settings backed up to: {backup_path}")
+                except Exception:
+                    pass
         
         # Default settings
         default_settings = {
@@ -31,6 +38,7 @@ class SettingsManager:
             "window_geometry": None,
             "launch_delay": 3  # Default 3 seconds delay between launches
         }
+        print("Using default settings")
         return default_settings
     
     def save_settings(self):
