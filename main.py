@@ -26,7 +26,7 @@ def main():
     app.setApplicationName("Perfect World Account Manager")
     app.setOrganizationName("PWManager")
     
-    # Set application icon globally
+    # Set application icon globally for all windows
     from PySide6.QtGui import QIcon
     
     # Try ICO file first (better Windows support), then fallback to SVG
@@ -37,8 +37,11 @@ def main():
     
     if os.path.exists(icon_path):
         app_icon = QIcon(icon_path)
+        # Set default window icon for all windows in this application
         app.setWindowIcon(app_icon)
         print(f"Global app icon set from: {icon_path}")
+    else:
+        print(f"Warning: No icon file found at {ico_path} or {svg_path}")
     
     # Create and show main window
     window = MainWindow()

@@ -76,10 +76,19 @@ class MainWindow(QMainWindow):
         
         if os.path.exists(icon_path):
             app_icon = QIcon(icon_path)
+            
+            # Set window icon (appears in title bar top-left corner)
             self.setWindowIcon(app_icon)
-            # Also set for the application instance
+            
+            # Also set for the application instance (taskbar, alt-tab, etc.)
             QApplication.instance().setWindowIcon(app_icon)
-            print(f"App icon set from: {icon_path}")
+            
+            # Force refresh the window icon display
+            self.repaint()
+            
+            print(f"Window and app icon set from: {icon_path}")
+        else:
+            print(f"Warning: No icon file found at {ico_path} or {svg_path}")
     
     def setup_ui(self):
         """Create the main UI"""
