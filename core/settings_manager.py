@@ -18,22 +18,27 @@ class SettingsManager:
         if self.settings_file.exists():
             try:
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception:
+                    settings = json.load(f)
+                    print(f"Settings loaded from: {self.settings_file}")  # Keep this for verification
+                    return settings
+            except Exception as e:
+                print(f"Error loading settings: {e}")
                 pass
         
         # Default settings
-        return {
+        default_settings = {
             "game_folder": "",
             "window_geometry": None,
             "launch_delay": 3  # Default 3 seconds delay between launches
         }
+        return default_settings
     
     def save_settings(self):
         """Save current settings to file"""
         try:
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, indent=2)
+            print(f"Settings saved to: {self.settings_file}")  # Keep this for verification
             return True
         except Exception as e:
             print(f"Error saving settings: {e}")
@@ -45,6 +50,7 @@ class SettingsManager:
     
     def set_game_folder(self, path):
         """Set the game folder path"""
+        print(f"Setting game folder to: {path}")  # Keep this for verification
         self.settings["game_folder"] = path
         self.save_settings()
     
@@ -58,11 +64,26 @@ class SettingsManager:
     
     def get_window_geometry(self):
         """Get saved window geometry"""
-        return self.settings.get("window_geometry")
+        geometry_data = self.settings.get("window_geometry")
+        if geometry_data and isinstance(geometry_data, list):
+            # Convert list back to QByteArray
+            from PySide6.QtCore import QByteArray
+            return QByteArray(bytes(geometry_data))
+        return geometry_data
     
     def set_window_geometry(self, geometry):
         """Save window geometry"""
-        self.settings["window_geometry"] = geometry
+        # Convert QByteArray to bytes for JSON serialization
+        if hasattr(geometry, 'data'):
+            # It's a QByteArray, convert to bytes then to list for JSON
+            geometry_data = list(geometry.data())
+        else:
+            geometry_data = geometry
+        
+        # Debug info for troubleshooting
+        if geometry:
+            print(f"Saving window geometry (type: {type(geometry)})")
+        self.settings["window_geometry"] = geometry_data
         self.save_settings()
     
     def get_launch_delay(self):

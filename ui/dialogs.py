@@ -333,14 +333,14 @@ class SettingsDialog(QDialog):
         self.delay_spinbox.setMinimum(1)
         self.delay_spinbox.setMaximum(30)
         self.delay_spinbox.setSuffix(" seconds")
-        self.delay_spinbox.setToolTip("Delay between consecutive game launches (1-30 seconds)")
+        self.delay_spinbox.setToolTip("Delay between consecutive game launches when launching multiple accounts (1-30 seconds). Single launches are immediate.")
         delay_layout.addWidget(self.delay_spinbox)
         
         delay_layout.addStretch()
         layout.addLayout(delay_layout)
         
         # Delay info label
-        delay_info = QLabel("Time to wait between launching multiple accounts")
+        delay_info = QLabel("Time to wait between launching multiple accounts (single launches are immediate)")
         delay_info.setStyleSheet("color: gray;")
         layout.addWidget(delay_info)
         

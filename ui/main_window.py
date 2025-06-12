@@ -459,22 +459,10 @@ class MainWindow(QMainWindow):
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
         self.table.horizontalHeader().resizeSection(0, 40)
         
-        # Use a timer to place the checkbox after table creation
-        QTimer.singleShot(100, self.place_header_checkbox)
-    
-    def place_header_checkbox(self):
-        """Place the master checkbox in the header after table is created"""
-        # Clean up any existing master checkbox
-        if hasattr(self, 'master_checkbox') and self.master_checkbox:
-            self.master_checkbox.deleteLater()
-            
-        # Create the checkbox widget
+        # Create checkbox widget for the header
         self.master_checkbox = QCheckBox()
         self.master_checkbox.setToolTip("Select/Unselect all accounts")
         self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
-        
-        # Set a fixed size for the checkbox
-        self.master_checkbox.setFixedSize(20, 20)
         
         # Style the master checkbox
         self.master_checkbox.setStyleSheet("""
@@ -501,29 +489,54 @@ class MainWindow(QMainWindow):
             }
         """)
         
-        # Position the checkbox over the header
-        header = self.table.horizontalHeader()
-        if header:
-            # Calculate position for first column header - center it
-            x = header.sectionPosition(0) + (header.sectionSize(0) - 20) // 2
-            y = (header.height() - 20) // 2
-            
-            # Set parent and position
-            self.master_checkbox.setParent(header)
-            self.master_checkbox.move(x, y)
-            self.master_checkbox.show()
-            self.master_checkbox.raise_()  # Ensure it's on top
-            
+        # Create container widget for centering
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.addStretch()
+        header_layout.addWidget(self.master_checkbox)
+        header_layout.addStretch()
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Try to set the widget for the first column header
+        try:
+            self.table.horizontalHeader().setSectionWidget(0, header_widget)
+            print("DEBUG: Master checkbox created as header widget")  # Debug
+        except AttributeError:
+            # Fallback: Use a different approach
+            print("DEBUG: setSectionWidget not available, using alternative approach")  # Debug
+            self.create_header_checkbox_alternative()
     
-    def reposition_master_checkbox(self):
-        """Reposition the master checkbox when table geometry changes"""
-        if hasattr(self, 'master_checkbox') and self.master_checkbox:
-            header = self.table.horizontalHeader()
-            if header:
-                x = header.sectionPosition(0) + (header.sectionSize(0) - 20) // 2
-                y = (header.height() - 20) // 2
-                self.master_checkbox.move(x, y)
-                self.master_checkbox.raise_()
+    def create_header_checkbox_alternative(self):
+        """Alternative method to create header checkbox"""
+        # Set header text to checkbox symbol and handle clicks
+        header = self.table.horizontalHeader()
+        
+        # Set the first column header to show a checkbox symbol
+        self.master_checkbox_checked = False
+        self.update_header_checkbox_symbol()
+        
+        # Connect header click to toggle function
+        header.sectionClicked.connect(self.on_header_section_clicked)
+        
+        print("DEBUG: Alternative header checkbox created")  # Debug
+    
+    def update_header_checkbox_symbol(self):
+        """Update the header checkbox symbol"""
+        symbol = "☑" if self.master_checkbox_checked else "☐"
+        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
+        columns[0] = symbol
+        self.table.setHorizontalHeaderLabels(columns)
+        print(f"DEBUG: Header symbol updated to: {symbol}")  # Debug
+    
+    def on_header_section_clicked(self, section):
+        """Handle header section clicks"""
+        print(f"DEBUG: Header section {section} clicked")  # Debug
+        if section == 0:  # First column (checkbox column)
+            self.master_checkbox_checked = not self.master_checkbox_checked
+            self.update_header_checkbox_symbol()
+            # Trigger the checkbox action
+            state = Qt.Checked if self.master_checkbox_checked else Qt.Unchecked
+            self.on_master_checkbox_changed(state)
     
     def load_accounts(self):
         """Load accounts into the table"""
@@ -718,14 +731,18 @@ class MainWindow(QMainWindow):
         edit_action.triggered.connect(partial(self.edit_account, row))
         delete_action.triggered.connect(partial(self.delete_account, row))
         
-        # Connect button click to show menu
-        menu_btn.clicked.connect(lambda: menu.exec_(QCursor.pos()))
+        # Connect button click to show menu - use partial to capture menu
+        menu_btn.clicked.connect(partial(self.show_row_menu, menu))
         actions_layout.addWidget(menu_btn)
         
         self.table.setCellWidget(row, 7, actions_widget)
         
         # Store account reference
         self.table.item(row, 1).setData(Qt.UserRole, account)
+    
+    def show_row_menu(self, menu):
+        """Show the row context menu"""
+        menu.exec_(QCursor.pos())
     
     def add_account(self):
         """Show add account dialog"""
@@ -1034,8 +1051,12 @@ class MainWindow(QMainWindow):
             self.game_launcher.queue_launch(login, batch_file, callback)
             queued += 1
         
-        self.show_message("information", "Launch Queued", 
-                         f"Queued {queued} account(s) for launch with delay.")
+        if queued == 1:
+            self.show_message("information", "Launch Queued", 
+                             f"Launching 1 account immediately.")
+        else:
+            self.show_message("information", "Launch Queued", 
+                             f"Launching {queued} account(s) - first launches immediately, others with delay.")
     
     def close_selected(self):
         """Close all selected accounts"""
@@ -1171,15 +1192,20 @@ class MainWindow(QMainWindow):
     
     def on_master_checkbox_changed(self, state):
         """Handle master checkbox in header - simple implementation"""
+        print(f"DEBUG: Master checkbox state changed to: {state}")  # Debug
         if state == Qt.Checked:
+            print("DEBUG: Checking all row checkboxes")  # Debug
             # Check all row checkboxes
             self.set_all_row_checkboxes(True)
         else:
+            print("DEBUG: Unchecking all row checkboxes")  # Debug
             # Uncheck all row checkboxes
             self.set_all_row_checkboxes(False)
     
     def set_all_row_checkboxes(self, checked):
         """Set all row checkboxes to the specified state"""
+        print(f"DEBUG: Setting all {self.table.rowCount()} row checkboxes to: {checked}")  # Debug
+        updated_count = 0
         for row in range(self.table.rowCount()):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
@@ -1190,12 +1216,15 @@ class MainWindow(QMainWindow):
                     checkbox.blockSignals(True)
                     checkbox.setChecked(checked)
                     checkbox.blockSignals(False)
+                    updated_count += 1
+                else:
+                    print(f"DEBUG: No checkbox found in row {row}")  # Debug
+            else:
+                print(f"DEBUG: No checkbox widget found in row {row}")  # Debug
+        print(f"DEBUG: Updated {updated_count} checkboxes")  # Debug
     
     def update_master_checkbox_state(self):
         """Update master checkbox state based on row checkboxes"""
-        if not hasattr(self, 'master_checkbox') or not self.master_checkbox:
-            return
-            
         # Count checked checkboxes
         checked_count = 0
         total_count = self.table.rowCount()
@@ -1207,16 +1236,27 @@ class MainWindow(QMainWindow):
                 if checkbox and checkbox.isChecked():
                     checked_count += 1
         
-        # Update master checkbox state without triggering its signal
-        self.master_checkbox.blockSignals(True)
-        if checked_count == 0:
-            self.master_checkbox.setChecked(False)
-        elif checked_count == total_count:
-            self.master_checkbox.setChecked(True)
-        else:
-            # Partially checked - Qt doesn't support tristate for this use case, so uncheck
-            self.master_checkbox.setChecked(False)
-        self.master_checkbox.blockSignals(False)
+        # Update master checkbox state
+        if hasattr(self, 'master_checkbox') and self.master_checkbox:
+            # Standard checkbox approach
+            self.master_checkbox.blockSignals(True)
+            if checked_count == 0:
+                self.master_checkbox.setChecked(False)
+            elif checked_count == total_count:
+                self.master_checkbox.setChecked(True)
+            else:
+                # Partially checked - Qt doesn't support tristate for this use case, so uncheck
+                self.master_checkbox.setChecked(False)
+            self.master_checkbox.blockSignals(False)
+        elif hasattr(self, 'master_checkbox_checked'):
+            # Alternative symbol approach
+            if checked_count == 0:
+                self.master_checkbox_checked = False
+            elif checked_count == total_count:
+                self.master_checkbox_checked = True
+            else:
+                self.master_checkbox_checked = False
+            self.update_header_checkbox_symbol()
     
     def export_accounts(self):
         """Export accounts to JSON file"""
@@ -1541,8 +1581,6 @@ class MainWindow(QMainWindow):
         else:
             self.welcome_widget.hide()
             self.table.show()
-            # Reposition master checkbox when table becomes visible
-            QTimer.singleShot(50, self.reposition_master_checkbox)
     
     def check_game_folder(self):
         """Check if game folder is set"""
