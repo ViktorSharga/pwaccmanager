@@ -1600,12 +1600,59 @@ class MainWindow(QMainWindow):
                          if self.game_launcher.is_account_running(acc.login))
             
             if running > 0:
-                reply = QMessageBox.question(
-                    self, "Close Application",
-                    f"There are {running} game client(s) still running.\n"
-                    "Do you want to close them before exiting?",
-                    QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel
-                )
+                msg_box = QMessageBox(self)
+                msg_box.setWindowTitle("Close Application")
+                msg_box.setText(f"There are {running} game client(s) still running.\n"
+                               "Do you want to close them before exiting?")
+                msg_box.setIcon(QMessageBox.Question)
+                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+                
+                # Set icon for dialog
+                icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+                if os.path.exists(icon_path):
+                    msg_box.setWindowIcon(QIcon(icon_path))
+                
+                # Apply consistent styling
+                msg_box.setStyleSheet("""
+                    QMessageBox {
+                        background-color: #fafafa;
+                        color: #212121;
+                        font-size: 13px;
+                        font-weight: 500;
+                        min-width: 300px;
+                    }
+                    QMessageBox QLabel {
+                        color: #212121;
+                        font-size: 13px;
+                        font-weight: 500;
+                        margin: 10px;
+                    }
+                    QMessageBox QPushButton {
+                        background-color: #2196f3;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 8px 16px;
+                        font-weight: 600;
+                        font-size: 13px;
+                        min-width: 80px;
+                        margin: 2px;
+                    }
+                    QMessageBox QPushButton:hover {
+                        background-color: #1976d2;
+                        color: #ffffff;
+                    }
+                    QMessageBox QPushButton:pressed {
+                        background-color: #1565c0;
+                        color: #ffffff;
+                    }
+                    QMessageBox QPushButton:default {
+                        background-color: #1976d2;
+                        color: #ffffff;
+                    }
+                """)
+                
+                reply = msg_box.exec()
                 
                 if reply == QMessageBox.Cancel:
                     event.ignore()
