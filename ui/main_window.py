@@ -539,13 +539,12 @@ class MainWindow(QMainWindow):
         # Row checkboxes don't need change handlers - master checkbox controls all
         
         checkbox_widget = QWidget()
-        checkbox_widget.setFixedHeight(32)
-        checkbox_layout = QVBoxLayout()
+        checkbox_layout = QVBoxLayout(checkbox_widget)
+        checkbox_layout.addStretch()
         checkbox_layout.addWidget(checkbox)
-        checkbox_layout.setAlignment(Qt.AlignCenter)
+        checkbox_layout.addStretch()
         checkbox_layout.setContentsMargins(0, 0, 0, 0)
         checkbox_layout.setSpacing(0)
-        checkbox_widget.setLayout(checkbox_layout)
         self.table.setCellWidget(row, 0, checkbox_widget)
         
         # Login (clickable for clipboard copy)
@@ -586,10 +585,9 @@ class MainWindow(QMainWindow):
         
         # Actions
         actions_widget = QWidget()
-        actions_widget.setFixedHeight(32)
-        actions_layout = QHBoxLayout()
+        actions_layout = QHBoxLayout(actions_widget)
         actions_layout.setContentsMargins(5, 0, 5, 0)
-        actions_layout.setAlignment(Qt.AlignCenter)
+        actions_layout.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
         
         # Play button
         play_btn = QPushButton("▶")
@@ -686,7 +684,6 @@ class MainWindow(QMainWindow):
         menu_btn.clicked.connect(lambda: menu.exec_(QCursor.pos()))
         actions_layout.addWidget(menu_btn)
         
-        actions_widget.setLayout(actions_layout)
         self.table.setCellWidget(row, 7, actions_widget)
         
         # Store account reference
