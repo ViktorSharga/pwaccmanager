@@ -3,15 +3,95 @@
 
 import os
 import sys
+import subprocess
+
+def install_dependencies():
+    """Try to install required dependencies"""
+    try:
+        print("Installing required dependencies...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "Pillow", "cairosvg"])
+        print("Dependencies installed successfully!")
+        return True
+    except subprocess.CalledProcessError:
+        print("Failed to install dependencies automatically.")
+        return False
 
 # Check if required libraries are available
+PIL_AVAILABLE = False
+CAIROSVG_AVAILABLE = False
+
 try:
     from PIL import Image
-    import cairosvg
+    PIL_AVAILABLE = True
 except ImportError:
-    print("This script requires PIL/Pillow and cairosvg libraries.")
-    print("Install them with: pip install Pillow cairosvg")
-    sys.exit(1)
+    pass
+
+try:
+    import cairosvg
+    CAIROSVG_AVAILABLE = True
+except ImportError:
+    pass
+
+if not (PIL_AVAILABLE and CAIROSVG_AVAILABLE):
+    print("Missing required libraries:")
+    if not PIL_AVAILABLE:
+        print("- PIL/Pillow")
+    if not CAIROSVG_AVAILABLE:
+        print("- cairosvg")
+    
+    print("\nAttempting to install dependencies...")
+    if install_dependencies():
+        # Try importing again
+        try:
+            from PIL import Image
+            import cairosvg
+            PIL_AVAILABLE = True
+            CAIROSVG_AVAILABLE = True
+        except ImportError:
+            pass
+    
+    if not (PIL_AVAILABLE and CAIROSVG_AVAILABLE):
+        print("\nCould not install dependencies automatically.")
+        print("Please install them manually with: pip install Pillow cairosvg")
+        print("\nAlternatively:")
+        print("1. Run this script again after installing dependencies")
+        print("2. Use an online SVG to ICO converter")
+        print("3. Skip the icon for now and remove --icon from PyInstaller command")
+        
+        # Try to create a basic ICO file from embedded data as last resort
+        if create_fallback_ico():
+            print("4. Created basic fallback ICO file")
+        
+        if not os.path.exists("app-icon.ico"):
+            sys.exit(1)
+
+def create_fallback_ico():
+    """Create a basic ICO file as fallback"""
+    try:
+        # This is a simple 32x32 blue square ICO file (base64 encoded)
+        ico_data = """
+AAABAAEAICAAAAEAIACoEAAAFgAAACgAAAAgAAAAQAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAA4Oj8AHiCoACE4qAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANDs/
+AB0hqAAhOKkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAORo4+AAhOaYA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATU7PwAdIakAITmpAA==
+"""
+        
+        import base64
+        ico_bytes = base64.b64decode(ico_data.strip().replace('\n', ''))
+        
+        with open("app-icon.ico", "wb") as f:
+            f.write(ico_bytes)
+        
+        print("Created fallback ICO file")
+        return True
+    except Exception as e:
+        print(f"Failed to create fallback ICO: {e}")
+        return False
 
 def generate_icons():
     """Generate icon files in various sizes from the SVG"""

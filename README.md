@@ -51,12 +51,17 @@ A Windows desktop application for managing Perfect World game accounts with mult
    pip install pyinstaller
    ```
 
-2. **Build the executable**
+2. **Create the icon file (required for Windows)**
+   ```cmd
+   python create_icon.py
+   ```
+
+3. **Build the executable**
    ```cmd
    pyinstaller --onefile --windowed --name "PW Account Manager" --icon=icons/app-icon.ico main.py
    ```
 
-3. **Find the executable**
+4. **Find the executable**
    - The standalone exe will be in the `dist` folder
    - You can distribute this single file to run without Python installed
 
@@ -181,12 +186,16 @@ pwaccmanager/
 ### Creating a Release
 
 1. **Update version** in main.py if needed
-2. **Build executable**
+2. **Create icon file**
+   ```cmd
+   python create_icon.py
+   ```
+3. **Build executable**
    ```cmd
    pyinstaller --onefile --windowed --name "PW Account Manager" --icon=icons/app-icon.ico main.py
    ```
-3. **Test the executable** thoroughly
-4. **Create release** on GitHub with the exe file
+4. **Test the executable** thoroughly
+5. **Create release** on GitHub with the exe file
 
 ## Contributing
 
