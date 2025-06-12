@@ -23,8 +23,9 @@ class BrowserLauncher:
             'edge': self._get_edge_paths()
         }
         
-        # Track launched browser processes
+        # Track launched browser processes and drivers
         self.launched_processes = []
+        self.active_drivers = []
     
     def _get_chrome_paths(self) -> List[str]:
         """Get possible Chrome installation paths"""
@@ -183,7 +184,7 @@ class BrowserLauncher:
                 from selenium.webdriver.support import expected_conditions as EC
                 from selenium.common.exceptions import TimeoutException, WebDriverException
             except ImportError:
-                self.logger.warning("Selenium not available, falling back to simple launch")
+                self.logger.info("Selenium not available, using simple browser launch")
                 return self.launch_browser_simple(browser, username, password)
             
             driver = None
@@ -198,16 +199,25 @@ class BrowserLauncher:
             if not driver:
                 return False
             
+            # Track the driver for cleanup
+            self.active_drivers.append(driver)
+            
             # Navigate and auto-fill
             success = self._auto_fill_login(driver, username, password)
             
             if success:
                 self.logger.info(f"Successfully launched {browser} with auto-fill for {username}")
                 # Don't close the driver - let user continue browsing
+                # Driver will be cleaned up when application exits
                 return True
             else:
-                if driver:
+                # Remove from tracking and close driver on failure
+                if driver in self.active_drivers:
+                    self.active_drivers.remove(driver)
+                try:
                     driver.quit()
+                except:
+                    pass
                 return False
                 
         except Exception as e:
@@ -219,15 +229,22 @@ class BrowserLauncher:
         try:
             from selenium import webdriver
             from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
+            from selenium.common.exceptions import WebDriverException
             
             options = Options()
             options.add_argument("--incognito")
             options.add_argument("--no-default-browser-check")
             options.add_argument("--disable-extensions")
             options.add_argument("--disable-popup-blocking")
+            options.add_argument("--disable-web-security")
+            options.add_argument("--disable-features=VizDisplayCompositor")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
             
             # Create isolated user data directory
             temp_dir = os.path.join(os.environ.get('TEMP', '/tmp'), f'pwam_chrome_{username}')
+            os.makedirs(temp_dir, exist_ok=True)
             options.add_argument(f"--user-data-dir={temp_dir}")
             
             # Try to find Chrome executable
@@ -235,8 +252,16 @@ class BrowserLauncher:
             if chrome_path:
                 options.binary_location = chrome_path
             
-            driver = webdriver.Chrome(options=options)
-            return driver
+            # Try to create driver with better error handling
+            try:
+                driver = webdriver.Chrome(options=options)
+                return driver
+            except WebDriverException as e:
+                if "chromedriver" in str(e).lower():
+                    self.logger.error("ChromeDriver not found. Please install ChromeDriver or use simple browser launch.")
+                else:
+                    self.logger.error(f"Chrome WebDriver error: {e}")
+                return None
             
         except Exception as e:
             self.logger.error(f"Failed to create Chrome driver: {e}")
@@ -304,14 +329,21 @@ class BrowserLauncher:
             from selenium.webdriver.common.by import By
             from selenium.webdriver.support.ui import WebDriverWait
             from selenium.webdriver.support import expected_conditions as EC
-            from selenium.common.exceptions import TimeoutException
+            from selenium.common.exceptions import TimeoutException, ElementNotInteractableException
+            import time
             
             # Navigate to login page
             self.logger.info(f"Navigating to {self.login_url}")
             driver.get(self.login_url)
             
-            # Wait for page to load
-            wait = WebDriverWait(driver, 10)
+            # Wait longer for page to fully load
+            wait = WebDriverWait(driver, 20)
+            
+            # Wait for page to be fully loaded
+            wait.until(lambda driver: driver.execute_script("return document.readyState") == "complete")
+            
+            # Additional wait for dynamic content
+            time.sleep(2)
             
             # Try different common field names/IDs for username
             username_selectors = [
@@ -321,28 +353,44 @@ class BrowserLauncher:
                 (By.ID, "username"),
                 (By.ID, "login"),
                 (By.ID, "email"),
-                (By.CSS_SELECTOR, "input[type='text']"),
-                (By.CSS_SELECTOR, "input[type='email']")
+                (By.CSS_SELECTOR, "input[type='text']:not([readonly]):not([disabled])"),
+                (By.CSS_SELECTOR, "input[type='email']:not([readonly]):not([disabled])"),
+                (By.CSS_SELECTOR, "input:not([type]):not([readonly]):not([disabled])")
             ]
             
             username_field = None
             for selector_type, selector_value in username_selectors:
                 try:
+                    # Wait for element to be clickable (visible and interactable)
                     username_field = wait.until(
-                        EC.presence_of_element_located((selector_type, selector_value))
+                        EC.element_to_be_clickable((selector_type, selector_value))
                     )
+                    self.logger.info(f"Found username field with selector: {selector_type}={selector_value}")
                     break
                 except TimeoutException:
+                    self.logger.debug(f"Username field not found with selector: {selector_type}={selector_value}")
                     continue
             
             if not username_field:
-                self.logger.error("Could not find username field")
+                self.logger.error("Could not find interactable username field")
                 return False
             
-            # Fill username
-            username_field.clear()
-            username_field.send_keys(username)
-            self.logger.info("Username field filled")
+            # Scroll to element to ensure it's visible
+            driver.execute_script("arguments[0].scrollIntoView(true);", username_field)
+            time.sleep(0.5)
+            
+            # Clear and fill username
+            try:
+                username_field.clear()
+                username_field.send_keys(username)
+                self.logger.info("Username field filled successfully")
+            except ElementNotInteractableException:
+                # Try clicking first then filling
+                username_field.click()
+                time.sleep(0.5)
+                username_field.clear()
+                username_field.send_keys(username)
+                self.logger.info("Username field filled after click")
             
             # Try different common field names/IDs for password
             password_selectors = [
@@ -350,25 +398,41 @@ class BrowserLauncher:
                 (By.NAME, "pass"),
                 (By.ID, "password"),
                 (By.ID, "pass"),
-                (By.CSS_SELECTOR, "input[type='password']")
+                (By.CSS_SELECTOR, "input[type='password']:not([readonly]):not([disabled])")
             ]
             
             password_field = None
             for selector_type, selector_value in password_selectors:
                 try:
-                    password_field = driver.find_element(selector_type, selector_value)
+                    password_field = wait.until(
+                        EC.element_to_be_clickable((selector_type, selector_value))
+                    )
+                    self.logger.info(f"Found password field with selector: {selector_type}={selector_value}")
                     break
-                except:
+                except TimeoutException:
+                    self.logger.debug(f"Password field not found with selector: {selector_type}={selector_value}")
                     continue
             
             if not password_field:
-                self.logger.error("Could not find password field")
+                self.logger.error("Could not find interactable password field")
                 return False
             
-            # Fill password
-            password_field.clear()
-            password_field.send_keys(password)
-            self.logger.info("Password field filled")
+            # Scroll to element to ensure it's visible
+            driver.execute_script("arguments[0].scrollIntoView(true);", password_field)
+            time.sleep(0.5)
+            
+            # Clear and fill password
+            try:
+                password_field.clear()
+                password_field.send_keys(password)
+                self.logger.info("Password field filled successfully")
+            except ElementNotInteractableException:
+                # Try clicking first then filling
+                password_field.click()
+                time.sleep(0.5)
+                password_field.clear()
+                password_field.send_keys(password)
+                self.logger.info("Password field filled after click")
             
             # Do NOT submit - let user review and click login
             self.logger.info(f"Auto-filled login form for {username} - ready for user review")
@@ -423,6 +487,36 @@ class BrowserLauncher:
         else:
             return False, self.get_error_message('launch_failed')
     
+    def cleanup_drivers(self):
+        """Clean up all active WebDriver instances"""
+        for driver in self.active_drivers[:]:  # Copy list to avoid modification during iteration
+            try:
+                driver.quit()
+                self.logger.info("WebDriver instance closed")
+            except Exception as e:
+                self.logger.warning(f"Error closing driver: {e}")
+            finally:
+                try:
+                    self.active_drivers.remove(driver)
+                except ValueError:
+                    pass  # Already removed
+    
+    def cleanup_processes(self):
+        """Clean up launched browser processes"""
+        for process in self.launched_processes[:]:
+            try:
+                if process.poll() is None:  # Process is still running
+                    process.terminate()
+                    process.wait(timeout=5)
+                self.logger.info("Browser process terminated")
+            except Exception as e:
+                self.logger.warning(f"Error terminating process: {e}")
+            finally:
+                try:
+                    self.launched_processes.remove(process)
+                except ValueError:
+                    pass
+    
     def cleanup_temp_profiles(self):
         """Clean up temporary browser profiles"""
         try:
@@ -431,7 +525,6 @@ class BrowserLauncher:
             temp_base = os.environ.get('TEMP', '/tmp')
             
             # Clean up Chrome profiles
-            chrome_pattern = os.path.join(temp_base, 'pwam_chrome_*')
             for path in Path(temp_base).glob('pwam_chrome_*'):
                 if path.is_dir():
                     try:
@@ -451,6 +544,12 @@ class BrowserLauncher:
                         
         except Exception as e:
             self.logger.error(f"Profile cleanup failed: {e}")
+    
+    def cleanup_all(self):
+        """Clean up all resources"""
+        self.cleanup_drivers()
+        self.cleanup_processes()
+        self.cleanup_temp_profiles()
     
     def get_error_message(self, error_type: str) -> str:
         """Get user-friendly error messages"""

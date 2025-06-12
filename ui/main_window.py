@@ -34,7 +34,8 @@ class MainWindow(QMainWindow):
         self.account_manager = AccountManager()
         self.game_launcher = None
         self.batch_generator = None
-        self.browser_launcher = BrowserLauncher()
+        # Initialize browser launcher lazily to improve startup time
+        self.browser_launcher = None
         
         # Initialize game folder dependent components
         self.init_game_components()
@@ -806,8 +807,24 @@ class MainWindow(QMainWindow):
         """Show the row context menu"""
         menu.exec_(QCursor.pos())
     
+    def _get_browser_launcher(self):
+        """Get browser launcher instance, creating it if needed (lazy initialization)"""
+        if self.browser_launcher is None:
+            self.browser_launcher = BrowserLauncher()
+        return self.browser_launcher
+    
     def launch_browser(self, row):
         """Launch browser for account login"""
+        # Check if a browser launch is already in progress for this row
+        if hasattr(self, 'browser_threads') and row in self.browser_threads:
+            if self.browser_threads[row].isRunning():
+                self.show_message("warning", "Launch in Progress", 
+                                 "A browser launch is already in progress for this account.")
+                return
+        
+        if not hasattr(self, 'browser_threads'):
+            self.browser_threads = {}
+        
         login_item = self.table.item(row, 1)
         if not login_item:
             return
@@ -856,21 +873,31 @@ class MainWindow(QMainWindow):
                     self.finished.emit(False, f"Error: {str(e)}")
         
         # Create worker and thread
-        self.browser_thread = QThread()
-        self.browser_worker = BrowserLaunchWorker(
-            self.browser_launcher, account.login, account.password, preferred_browser
+        browser_thread = QThread()
+        browser_worker = BrowserLaunchWorker(
+            self._get_browser_launcher(), account.login, account.password, preferred_browser
         )
-        self.browser_worker.moveToThread(self.browser_thread)
+        browser_worker.moveToThread(browser_thread)
         
-        # Connect signals
-        self.browser_thread.started.connect(self.browser_worker.launch)
-        self.browser_worker.finished.connect(lambda success, msg: self._on_browser_launch_finished(row, success, msg))
-        self.browser_worker.finished.connect(self.browser_thread.quit)
-        self.browser_worker.finished.connect(self.browser_worker.deleteLater)
-        self.browser_thread.finished.connect(self.browser_thread.deleteLater)
+        # Store thread reference to prevent multiple launches
+        self.browser_threads[row] = browser_thread
+        
+        # Connect signals - use Qt.QueuedConnection for thread safety
+        browser_thread.started.connect(browser_worker.launch)
+        browser_worker.finished.connect(
+            lambda success, msg: self._on_browser_launch_finished(row, success, msg),
+            Qt.QueuedConnection
+        )
+        browser_worker.finished.connect(browser_thread.quit, Qt.QueuedConnection)
+        browser_worker.finished.connect(browser_worker.deleteLater, Qt.QueuedConnection)
+        browser_thread.finished.connect(browser_thread.deleteLater, Qt.QueuedConnection)
+        browser_thread.finished.connect(
+            lambda: self.browser_threads.pop(row, None),
+            Qt.QueuedConnection
+        )
         
         # Start thread
-        self.browser_thread.start()
+        browser_thread.start()
     
     def _on_browser_launch_finished(self, row, success, message):
         """Handle browser launch completion"""
@@ -1753,9 +1780,20 @@ class MainWindow(QMainWindow):
         # Save window geometry
         self.settings_manager.set_window_geometry(self.saveGeometry())
         
-        # Clean up browser profiles
+        # Clean up browser resources
         if self.browser_launcher:
-            self.browser_launcher.cleanup_temp_profiles()
+            self.browser_launcher.cleanup_all()
+        
+        # Clean up browser threads
+        if hasattr(self, 'browser_threads'):
+            for row, thread in list(self.browser_threads.items()):
+                if thread.isRunning():
+                    thread.quit()
+                    thread.wait(2000)  # Wait up to 2 seconds
+        
+        # Stop cleanup timer properly
+        if hasattr(self, 'cleanup_timer') and self.cleanup_timer.isActive():
+            self.cleanup_timer.stop()
         
         # Terminate all running processes
         if self.game_launcher:
