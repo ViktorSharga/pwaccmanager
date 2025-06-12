@@ -940,21 +940,16 @@ class MainWindow(QMainWindow):
     
     def on_master_checkbox_changed(self, state):
         """Handle master checkbox state changes"""
-        print(f"Master checkbox clicked, state: {state}")
-        
         # Only respond to checked/unchecked, not partially checked
         if state == Qt.Checked:
-            print("Setting all checkboxes to checked")
             self.set_all_checkboxes(True)
         elif state == Qt.Unchecked:
-            print("Setting all checkboxes to unchecked")
             self.set_all_checkboxes(False)
         # Ignore partially checked state - it's just for display
     
     def set_all_checkboxes(self, checked):
         """Set all row checkboxes to checked or unchecked state"""
         row_count = self.table.rowCount()
-        print(f"Setting {row_count} checkboxes to {checked}")
         
         # Temporarily disconnect signals to prevent recursion
         self.master_checkbox.stateChanged.disconnect()
@@ -977,7 +972,6 @@ class MainWindow(QMainWindow):
         
         # Reconnect master checkbox signal
         self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
-        print(f"Finished setting all checkboxes")
     
     def update_master_checkbox_state(self):
         """Update master checkbox state based on individual checkboxes"""
@@ -1018,8 +1012,6 @@ class MainWindow(QMainWindow):
         else:
             self.master_checkbox.setCheckState(Qt.PartiallyChecked)
         self.master_checkbox.blockSignals(False)
-        
-        print(f"Updated master checkbox: {checked_count}/{total_rows} checked")
     
     def export_accounts(self):
         """Export accounts to JSON file"""
