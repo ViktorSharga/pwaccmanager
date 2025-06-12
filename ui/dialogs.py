@@ -4,6 +4,8 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QFormLayout,
                              QLineEdit, QPushButton, QLabel, QMessageBox,
                              QFileDialog, QDialogButtonBox, QSpinBox, QComboBox)
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
+import os
 
 from core.account_manager import Account
 from utils.validators import (validate_login, validate_password, 
@@ -23,12 +25,19 @@ class AccountDialog(QDialog):
         self.setWindowTitle("Edit Account" if account else "Add Account")
         self.setModal(True)
         self.setMinimumWidth(400)
+        self.set_dialog_icon()
         
         self.setup_ui()
         self.setup_styling()
         
         if account:
             self.load_account_data()
+    
+    def set_dialog_icon(self):
+        """Set the dialog icon"""
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
     
     def setup_ui(self):
         """Create the dialog UI"""
@@ -279,10 +288,17 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Settings")
         self.setModal(True)
         self.setMinimumWidth(500)
+        self.set_dialog_icon()
         
         self.setup_ui()
         self.setup_styling()
         self.load_settings()
+    
+    def set_dialog_icon(self):
+        """Set the dialog icon"""
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
     
     def setup_ui(self):
         """Create the settings dialog UI"""

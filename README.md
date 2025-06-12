@@ -53,7 +53,7 @@ A Windows desktop application for managing Perfect World game accounts with mult
 
 2. **Build the executable**
    ```cmd
-   pyinstaller --onefile --windowed --name "PW Account Manager" main.py
+   pyinstaller --onefile --windowed --name "PW Account Manager" --icon=icons/app-icon.ico main.py
    ```
 
 3. **Find the executable**
@@ -143,6 +143,9 @@ pwaccmanager/
 ├── requirements.txt     # Python dependencies
 ├── settings.json        # App settings (auto-created)
 ├── accounts.json        # Account data (auto-created)
+├── icons/              # Application icons
+│   ├── app-icon.svg    # Main application icon
+│   └── generate_icons.py # Icon generation script
 ├── core/               # Business logic modules
 ├── ui/                 # User interface modules
 └── utils/              # Utility functions
@@ -158,12 +161,19 @@ pwaccmanager/
    pip install pyinstaller black pylint
    ```
 
-2. **Run tests** (if available)
+2. **Optional: Generate icon files**
+   ```cmd
+   pip install Pillow cairosvg
+   cd icons
+   python generate_icons.py
+   ```
+
+3. **Run tests** (if available)
    ```cmd
    python -m pytest
    ```
 
-3. **Format code**
+4. **Format code**
    ```cmd
    black .
    ```
@@ -173,7 +183,7 @@ pwaccmanager/
 1. **Update version** in main.py if needed
 2. **Build executable**
    ```cmd
-   pyinstaller --onefile --windowed --name "PW Account Manager" --icon=icon.ico main.py
+   pyinstaller --onefile --windowed --name "PW Account Manager" --icon=icons/app-icon.ico main.py
    ```
 3. **Test the executable** thoroughly
 4. **Create release** on GitHub with the exe file

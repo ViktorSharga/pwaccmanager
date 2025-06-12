@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QDialog, QVBoxLayout as QVBoxLayoutDialog, QListWidget,
                              QDialogButtonBox, QProgressBar, QLabel)
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QCursor
+from PySide6.QtGui import QAction, QCursor, QIcon, QPixmap
 
 import json
 import os
@@ -39,6 +39,7 @@ class MainWindow(QMainWindow):
         
         # Setup UI
         self.setWindowTitle("Perfect World Account Manager")
+        self.set_app_icon()
         self.setup_ui()
         self.load_accounts()
         
@@ -64,6 +65,15 @@ class MainWindow(QMainWindow):
             if self.game_launcher:
                 delay = self.settings_manager.get_launch_delay()
                 self.game_launcher.set_launch_delay(delay)
+    
+    def set_app_icon(self):
+        """Set the application icon"""
+        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+        if os.path.exists(icon_path):
+            app_icon = QIcon(icon_path)
+            self.setWindowIcon(app_icon)
+            # Also set for the application
+            QApplication.instance().setWindowIcon(app_icon)
     
     def setup_ui(self):
         """Create the main UI"""
@@ -433,9 +443,9 @@ class MainWindow(QMainWindow):
         header.resizeSection(6, 60)  # Server
         header.resizeSection(7, 120)  # Actions
         
-        # Set row height to accommodate buttons (24px button + 8px padding)
-        self.table.verticalHeader().setDefaultSectionSize(34)
-        self.table.verticalHeader().setMinimumSectionSize(34)
+        # Set row height to accommodate buttons (24px button + 16px padding)
+        self.table.verticalHeader().setDefaultSectionSize(40)
+        self.table.verticalHeader().setMinimumSectionSize(40)
         
         # Hide row numbers/vertical header
         self.table.verticalHeader().setVisible(False)
@@ -536,7 +546,8 @@ class MainWindow(QMainWindow):
                 image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMC42IDEuNEw0LjMgNy43TDEuNCA0LjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=);
             }
         """)
-        # Row checkboxes don't need change handlers - master checkbox controls all
+        # Connect checkbox to update master checkbox state
+        checkbox.stateChanged.connect(lambda: self.update_master_checkbox_state())
         
         checkbox_widget = QWidget()
         checkbox_layout = QVBoxLayout(checkbox_widget)
@@ -1024,9 +1035,36 @@ class MainWindow(QMainWindow):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
                 # Find the checkbox in the widget
-                for child in checkbox_widget.findChildren(QCheckBox):
-                    child.setChecked(checked)
-                    break
+                checkbox = checkbox_widget.findChild(QCheckBox)
+                if checkbox:
+                    checkbox.setChecked(checked)
+    
+    def update_master_checkbox_state(self):
+        """Update master checkbox state based on row checkboxes"""
+        if not hasattr(self, 'master_checkbox') or not self.master_checkbox:
+            return
+            
+        # Count checked checkboxes
+        checked_count = 0
+        total_count = self.table.rowCount()
+        
+        for row in range(total_count):
+            checkbox_widget = self.table.cellWidget(row, 0)
+            if checkbox_widget:
+                checkbox = checkbox_widget.findChild(QCheckBox)
+                if checkbox and checkbox.isChecked():
+                    checked_count += 1
+        
+        # Update master checkbox state without triggering its signal
+        self.master_checkbox.blockSignals(True)
+        if checked_count == 0:
+            self.master_checkbox.setChecked(False)
+        elif checked_count == total_count:
+            self.master_checkbox.setChecked(True)
+        else:
+            # Partially checked - Qt doesn't support tristate for this use case, so uncheck
+            self.master_checkbox.setChecked(False)
+        self.master_checkbox.blockSignals(False)
     
     def export_accounts(self):
         """Export accounts to JSON file"""

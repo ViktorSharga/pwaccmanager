@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- Background -->
+  <rect width="256" height="256" rx="32" fill="#1e40af"/>
+  
+  <!-- Icon elements -->
+  <g transform="translate(128, 128)">
+    <!-- User cards stack effect -->
+    <g opacity="0.3">
+      <rect x="-45" y="-35" width="90" height="100" rx="8" fill="#ffffff" transform="rotate(-5)"/>
+    </g>
+    <g opacity="0.5">
+      <rect x="-45" y="-40" width="90" height="100" rx="8" fill="#ffffff" transform="rotate(-2.5)"/>
+    </g>
+    
+    <!-- Main card -->
+    <rect x="-45" y="-45" width="90" height="100" rx="8" fill="#ffffff"/>
+    
+    <!-- User icon on card -->
+    <circle cx="0" cy="-15" r="18" fill="#1e40af"/>
+    <path d="M -20 10 Q -20 5 -15 0 L 15 0 Q 20 5 20 10 L 20 20 L -20 20 Z" fill="#1e40af"/>
+    
+    <!-- Text lines on card -->
+    <rect x="-30" y="35" width="60" height="4" rx="2" fill="#94a3b8"/>
+    <rect x="-30" y="44" width="45" height="4" rx="2" fill="#cbd5e1"/>
+  </g>
+</svg>
