@@ -106,13 +106,13 @@ class AccountDialog(QDialog):
         # Validate login
         valid, msg = validate_login(login)
         if not valid:
-            QMessageBox.warning(self, "Invalid Login", msg)
+            self.show_message("warning", "Invalid Login", msg)
             self.login_edit.setFocus()
             return
         
         # Check for duplicate login
         if login != self.original_login and login in self.existing_logins:
-            QMessageBox.warning(self, "Duplicate Login", 
+            self.show_message("warning", "Duplicate Login", 
                               "An account with this login already exists.")
             self.login_edit.setFocus()
             return
@@ -120,7 +120,7 @@ class AccountDialog(QDialog):
         # Validate password
         valid, msg = validate_password(password)
         if not valid:
-            QMessageBox.warning(self, "Invalid Password", msg)
+            self.show_message("warning", "Invalid Password", msg)
             self.password_edit.setFocus()
             return
         
@@ -133,12 +133,63 @@ class AccountDialog(QDialog):
         ]:
             valid, msg = validator(value)
             if not valid:
-                QMessageBox.warning(self, f"Invalid {field_name}", msg)
+                self.show_message("warning", f"Invalid {field_name}", msg)
                 return
         
         # Create account object
         self.account = Account(login, password, character, description, owner, server)
         self.accept()
+    
+    def show_message(self, msg_type, title, text):
+        """Show a styled message box"""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        
+        if msg_type == "warning":
+            msg_box.setIcon(QMessageBox.Warning)
+        elif msg_type == "information":
+            msg_box.setIcon(QMessageBox.Information)
+        elif msg_type == "critical":
+            msg_box.setIcon(QMessageBox.Critical)
+        
+        # Apply consistent styling
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #fafafa;
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                min-width: 300px;
+            }
+            QMessageBox QLabel {
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                margin: 10px;
+            }
+            QMessageBox QPushButton {
+                background-color: #2196f3;
+                color: #ffffff;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 600;
+                font-size: 13px;
+                min-width: 80px;
+                margin: 2px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #1976d2;
+                color: #ffffff;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #1565c0;
+                color: #ffffff;
+            }
+        """)
+        
+        msg_box.exec()
     
     def get_account(self):
         """Get the account object"""
@@ -319,12 +370,12 @@ class SettingsDialog(QDialog):
         folder = self.folder_edit.text()
         
         if not folder:
-            QMessageBox.warning(self, "No Folder Selected", 
+            self.show_message("warning", "No Folder Selected", 
                               "Please select the game folder.")
             return
         
         if not self.settings_manager.is_valid_game_folder(folder):
-            QMessageBox.warning(self, "Invalid Game Folder", 
+            self.show_message("warning", "Invalid Game Folder", 
                               "The selected folder does not contain elementclient.exe")
             return
         
@@ -332,6 +383,57 @@ class SettingsDialog(QDialog):
         self.settings_manager.set_game_folder(folder)
         self.settings_manager.set_launch_delay(self.delay_spinbox.value())
         self.accept()
+    
+    def show_message(self, msg_type, title, text):
+        """Show a styled message box"""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        
+        if msg_type == "warning":
+            msg_box.setIcon(QMessageBox.Warning)
+        elif msg_type == "information":
+            msg_box.setIcon(QMessageBox.Information)
+        elif msg_type == "critical":
+            msg_box.setIcon(QMessageBox.Critical)
+        
+        # Apply consistent styling
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #fafafa;
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                min-width: 300px;
+            }
+            QMessageBox QLabel {
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                margin: 10px;
+            }
+            QMessageBox QPushButton {
+                background-color: #2196f3;
+                color: #ffffff;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 600;
+                font-size: 13px;
+                min-width: 80px;
+                margin: 2px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #1976d2;
+                color: #ffffff;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #1565c0;
+                color: #ffffff;
+            }
+        """)
+        
+        msg_box.exec()
     
     def setup_styling(self):
         """Apply modern styling to the dialog"""

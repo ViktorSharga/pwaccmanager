@@ -297,6 +297,71 @@ class MainWindow(QMainWindow):
         self.welcome_widget.setLayout(welcome_layout)
         # Don't hide initially - let update_welcome_screen_visibility decide
     
+    def show_message(self, msg_type, title, text, buttons=None):
+        """Show a styled message box"""
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(title)
+        msg_box.setText(text)
+        
+        if msg_type == "information":
+            msg_box.setIcon(QMessageBox.Information)
+        elif msg_type == "warning":
+            msg_box.setIcon(QMessageBox.Warning)
+        elif msg_type == "critical":
+            msg_box.setIcon(QMessageBox.Critical)
+        elif msg_type == "question":
+            msg_box.setIcon(QMessageBox.Question)
+            if buttons:
+                msg_box.setStandardButtons(buttons)
+            else:
+                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        
+        # Apply consistent styling
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background-color: #fafafa;
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                min-width: 300px;
+            }
+            QMessageBox QLabel {
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                margin: 10px;
+            }
+            QMessageBox QPushButton {
+                background-color: #2196f3;
+                color: #ffffff;
+                border: none;
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-weight: 600;
+                font-size: 13px;
+                min-width: 80px;
+                margin: 2px;
+            }
+            QMessageBox QPushButton:hover {
+                background-color: #1976d2;
+                color: #ffffff;
+            }
+            QMessageBox QPushButton:pressed {
+                background-color: #1565c0;
+                color: #ffffff;
+            }
+            QMessageBox QPushButton:default {
+                background-color: #1976d2;
+                color: #ffffff;
+            }
+        """)
+        
+        if msg_type == "question":
+            return msg_box.exec()
+        else:
+            msg_box.exec()
+            return None
+    
     def create_table(self):
         """Create the accounts table"""
         self.table = QTableWidget()
@@ -567,7 +632,7 @@ class MainWindow(QMainWindow):
                 self.update_master_checkbox_state()
                 self.update_welcome_screen_visibility()
             else:
-                QMessageBox.warning(self, "Error", "Failed to add account.")
+                self.show_message("warning", "Error", "Failed to add account.")
     
     def edit_account(self, row):
         """Edit an account"""
@@ -613,8 +678,8 @@ class MainWindow(QMainWindow):
         
         account = login_item.data(Qt.UserRole)
         
-        reply = QMessageBox.question(
-            self, "Delete Account",
+        reply = self.show_message(
+            "question", "Delete Account",
             f"Are you sure you want to delete the account '{account.login}'?",
             QMessageBox.Yes | QMessageBox.No
         )
@@ -648,7 +713,7 @@ class MainWindow(QMainWindow):
         
         # Check if already running
         if self.game_launcher.is_account_running(account.login):
-            QMessageBox.information(self, "Already Running", 
+            self.show_message("information", "Already Running", 
                                   f"Account '{account.login}' is already running.")
             return
         
@@ -661,17 +726,17 @@ class MainWindow(QMainWindow):
             )
         
         if not batch_file:
-            QMessageBox.warning(self, "Error", "Failed to create batch file.")
+            self.show_message("warning", "Error", "Failed to create batch file.")
             return
         
         # Launch the game
         pid = self.game_launcher.launch_account(account.login, batch_file)
         if pid:
             self.update_row_status(row, True)
-            QMessageBox.information(self, "Success", 
+            self.show_message("information", "Success", 
                                   f"Account '{account.login}' launched successfully.")
         else:
-            QMessageBox.warning(self, "Error", 
+            self.show_message("warning", "Error", 
                               f"Failed to launch account '{account.login}'.")
     
     def close_account(self, row):
@@ -687,10 +752,10 @@ class MainWindow(QMainWindow):
         
         if self.game_launcher.terminate_account(account.login):
             self.update_row_status(row, False)
-            QMessageBox.information(self, "Success", 
+            self.show_message("information", "Success", 
                                   f"Account '{account.login}' closed successfully.")
         else:
-            QMessageBox.warning(self, "Error", 
+            self.show_message("warning", "Error", 
                               f"Failed to close account '{account.login}'.")
     
     def launch_selected(self):
@@ -810,7 +875,7 @@ class MainWindow(QMainWindow):
         if dialog.exec():
             # Reinitialize game components with new folder
             self.init_game_components()
-            QMessageBox.information(self, "Settings Saved", 
+            self.show_message("information", "Settings Saved", 
                                   "Settings have been saved successfully.")
     
     def get_selected_rows(self):
@@ -974,11 +1039,11 @@ class MainWindow(QMainWindow):
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
             
-            QMessageBox.information(self, "Export Successful", 
+            self.show_message("information", "Export Successful", 
                                   f"Exported {len(selected_accounts)} account(s) to:\n{file_path}")
             
         except Exception as e:
-            QMessageBox.critical(self, "Export Error", 
+            self.show_message("critical", "Export Error", 
                                f"Failed to export accounts:\n{str(e)}")
     
     def show_export_dialog(self):
@@ -1254,7 +1319,7 @@ class MainWindow(QMainWindow):
     def check_game_folder(self):
         """Check if game folder is set"""
         if not self.settings_manager.get_game_folder():
-            QMessageBox.warning(self, "No Game Folder", 
+            self.show_message("warning", "No Game Folder", 
                               "Please set the game folder in Settings first.")
             self.open_settings()
             return False
