@@ -68,12 +68,18 @@ class MainWindow(QMainWindow):
     
     def set_app_icon(self):
         """Set the application icon"""
-        icon_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+        # Try ICO file first (better Windows support), then fallback to SVG
+        ico_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.ico')
+        svg_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icons', 'app-icon.svg')
+        
+        icon_path = ico_path if os.path.exists(ico_path) else svg_path
+        
         if os.path.exists(icon_path):
             app_icon = QIcon(icon_path)
             self.setWindowIcon(app_icon)
-            # Also set for the application
+            # Also set for the application instance
             QApplication.instance().setWindowIcon(app_icon)
+            print(f"App icon set from: {icon_path}")
     
     def setup_ui(self):
         """Create the main UI"""
