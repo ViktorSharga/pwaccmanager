@@ -202,15 +202,7 @@ class MainWindow(QMainWindow):
         settings_action.triggered.connect(self.open_settings)
         toolbar.addAction(settings_action)
         
-        toolbar.addSeparator()
-        
-        # Master checkbox for select all
-        self.master_checkbox = QCheckBox()
-        self.master_checkbox.setTristate(True)
-        self.master_checkbox.setToolTip("Select/Unselect all accounts")
-        self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
-        toolbar.addWidget(QLabel("Select All:"))
-        toolbar.addWidget(self.master_checkbox)
+        # No more select all in toolbar - will be in table header
     
     def create_welcome_screen(self):
         """Create welcome screen for when no accounts are loaded"""
@@ -367,9 +359,12 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         
         # Set columns
-        columns = [" ", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
+        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
         self.table.setColumnCount(len(columns))
         self.table.setHorizontalHeaderLabels(columns)
+        
+        # Create master checkbox in the header of first column
+        self.create_header_checkbox()
         
         # Start with 0 rows - only add rows when accounts are added
         self.table.setRowCount(0)
@@ -427,9 +422,9 @@ class MainWindow(QMainWindow):
             }
         """)
         
-        # Set column widths
+        # Set column widths  
         header = self.table.horizontalHeader()
-        header.resizeSection(0, 30)  # Checkbox column
+        header.resizeSection(0, 40)  # Checkbox column (for master checkbox)
         header.setSectionResizeMode(1, QHeaderView.Stretch)  # Login
         header.resizeSection(2, 100)  # Password
         header.setSectionResizeMode(3, QHeaderView.Stretch)  # Character
@@ -448,6 +443,53 @@ class MainWindow(QMainWindow):
         # Initially hide table - let update_welcome_screen_visibility decide
         self.table.hide()
     
+    def create_header_checkbox(self):
+        """Create master checkbox in table header first column"""
+        # Set up first column for checkbox
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
+        self.table.horizontalHeader().resizeSection(0, 40)
+        
+        # Use a timer to place the checkbox after table creation
+        QTimer.singleShot(100, self.place_header_checkbox)
+    
+    def place_header_checkbox(self):
+        """Place the master checkbox in the header after table is created"""
+        # Create the checkbox widget
+        self.master_checkbox = QCheckBox()
+        self.master_checkbox.setToolTip("Select/Unselect all accounts")
+        self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
+        
+        # Style the master checkbox
+        self.master_checkbox.setStyleSheet("""
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #d0d0d0;
+                border-radius: 3px;
+                background-color: #ffffff;
+            }
+            QCheckBox::indicator:hover {
+                border-color: #2196f3;
+            }
+            QCheckBox::indicator:checked {
+                background-color: #2196f3;
+                border-color: #2196f3;
+                image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMC42IDEuNEw0LjMgNy43TDEuNCA0LjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=);
+            }
+        """)
+        
+        # Position the checkbox over the header
+        header = self.table.horizontalHeader()
+        if header:
+            # Calculate position for first column header
+            x = header.sectionPosition(0) + (header.sectionSize(0) - 20) // 2
+            y = (header.height() - 20) // 2
+            
+            # Set parent and position
+            self.master_checkbox.setParent(header)
+            self.master_checkbox.move(x, y)
+            self.master_checkbox.show()
+    
     def load_accounts(self):
         """Load accounts into the table"""
         accounts = self.account_manager.get_all_accounts()
@@ -462,7 +504,6 @@ class MainWindow(QMainWindow):
                 self.add_account_to_table(account)
         
         self.update_status_bar()
-        self.update_master_checkbox_state()
         self.update_welcome_screen_visibility()
     
     def add_account_to_table(self, account):
@@ -495,7 +536,7 @@ class MainWindow(QMainWindow):
                 image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iOSIgdmlld0JveD0iMCAwIDEyIDkiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0xMC42IDEuNEw0LjMgNy43TDEuNCA0LjgiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=);
             }
         """)
-        checkbox.stateChanged.connect(self.on_row_checkbox_changed)
+        # Row checkboxes don't need change handlers - master checkbox controls all
         
         checkbox_widget = QWidget()
         checkbox_widget.setFixedHeight(32)
@@ -901,7 +942,6 @@ class MainWindow(QMainWindow):
                 added += 1
         
         self.update_status_bar()
-        self.update_master_checkbox_state()
         self.update_welcome_screen_visibility()
         QMessageBox.information(self, "Scan Complete", 
                               f"Found {len(accounts_data)} account(s).\n"
@@ -972,85 +1012,24 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Clipboard Error", 
                               f"Failed to copy {field_name.lower()} to clipboard: {e}")
     
-    def on_row_checkbox_changed(self):
-        """Handle individual row checkbox changes"""
-        # Small delay to ensure all signals are processed
-        QTimer.singleShot(10, self.update_master_checkbox_state)
-    
     def on_master_checkbox_changed(self, state):
-        """Handle master checkbox state changes"""
-        # Only respond to checked/unchecked, not partially checked
+        """Handle master checkbox in header - simple implementation"""
         if state == Qt.Checked:
-            self.set_all_checkboxes(True)
-        elif state == Qt.Unchecked:
-            self.set_all_checkboxes(False)
-        # Ignore partially checked state - it's just for display
+            # Check all row checkboxes
+            self.set_all_row_checkboxes(True)
+        else:
+            # Uncheck all row checkboxes
+            self.set_all_row_checkboxes(False)
     
-    def set_all_checkboxes(self, checked):
-        """Set all row checkboxes to checked or unchecked state"""
-        row_count = self.table.rowCount()
-        
-        # Temporarily disconnect signals to prevent recursion
-        self.master_checkbox.stateChanged.disconnect()
-        
-        for row in range(row_count):
+    def set_all_row_checkboxes(self, checked):
+        """Set all row checkboxes to the specified state"""
+        for row in range(self.table.rowCount()):
             checkbox_widget = self.table.cellWidget(row, 0)
             if checkbox_widget:
-                # Find checkbox in the widget
-                checkbox = None
+                # Find the checkbox in the widget
                 for child in checkbox_widget.findChildren(QCheckBox):
-                    checkbox = child
+                    child.setChecked(checked)
                     break
-                
-                if checkbox:
-                    # Temporarily disconnect to prevent individual signals
-                    checkbox.stateChanged.disconnect()
-                    checkbox.setChecked(checked)
-                    # Reconnect the signal
-                    checkbox.stateChanged.connect(self.on_row_checkbox_changed)
-        
-        # Reconnect master checkbox signal
-        self.master_checkbox.stateChanged.connect(self.on_master_checkbox_changed)
-    
-    def update_master_checkbox_state(self):
-        """Update master checkbox state based on individual checkboxes"""
-        if not hasattr(self, 'master_checkbox') or not self.master_checkbox:
-            return
-            
-        total_rows = self.table.rowCount()
-        
-        if total_rows == 0:
-            self.master_checkbox.blockSignals(True)
-            self.master_checkbox.setCheckState(Qt.Unchecked)
-            self.master_checkbox.setEnabled(False)
-            self.master_checkbox.blockSignals(False)
-            return
-        else:
-            self.master_checkbox.setEnabled(True)
-        
-        # Count checked boxes
-        checked_count = 0
-        for row in range(total_rows):
-            checkbox_widget = self.table.cellWidget(row, 0)
-            if checkbox_widget:
-                # Find checkbox in the widget
-                checkbox = None
-                for child in checkbox_widget.findChildren(QCheckBox):
-                    checkbox = child
-                    break
-                
-                if checkbox and checkbox.isChecked():
-                    checked_count += 1
-        
-        # Update master checkbox state without triggering signals
-        self.master_checkbox.blockSignals(True)
-        if checked_count == 0:
-            self.master_checkbox.setCheckState(Qt.Unchecked)
-        elif checked_count == total_rows:
-            self.master_checkbox.setCheckState(Qt.Checked)
-        else:
-            self.master_checkbox.setCheckState(Qt.PartiallyChecked)
-        self.master_checkbox.blockSignals(False)
     
     def export_accounts(self):
         """Export accounts to JSON file"""
