@@ -344,6 +344,42 @@ class SettingsDialog(QDialog):
         delay_info.setStyleSheet("color: gray;")
         layout.addWidget(delay_info)
         
+        # Browser settings section
+        browser_label = QLabel("Browser Settings")
+        browser_label.setStyleSheet("color: #212121; font-weight: bold; font-size: 14px; margin-top: 20px;")
+        layout.addWidget(browser_label)
+        
+        # Preferred browser setting
+        browser_layout = QHBoxLayout()
+        browser_layout.addWidget(QLabel("Preferred Browser:"))
+        
+        self.browser_combo = QComboBox()
+        self.browser_combo.addItems(["Auto-detect", "Chrome", "Firefox", "Edge"])
+        self.browser_combo.setToolTip("Select preferred browser for auto-login feature")
+        browser_layout.addWidget(self.browser_combo)
+        
+        browser_layout.addStretch()
+        layout.addLayout(browser_layout)
+        
+        # Browser info label
+        browser_info = QLabel("Auto-detect will use the first available browser (Chrome > Firefox > Edge)")
+        browser_info.setStyleSheet("color: gray;")
+        layout.addWidget(browser_info)
+        
+        # Browser timeout setting
+        timeout_layout = QHBoxLayout()
+        timeout_layout.addWidget(QLabel("Browser Launch Timeout:"))
+        
+        self.timeout_spinbox = QSpinBox()
+        self.timeout_spinbox.setMinimum(5)
+        self.timeout_spinbox.setMaximum(60)
+        self.timeout_spinbox.setSuffix(" seconds")
+        self.timeout_spinbox.setToolTip("How long to wait for browser to launch and page to load")
+        timeout_layout.addWidget(self.timeout_spinbox)
+        
+        timeout_layout.addStretch()
+        layout.addLayout(timeout_layout)
+        
         # Add stretch
         layout.addStretch()
         
@@ -367,6 +403,17 @@ class SettingsDialog(QDialog):
             
             delay = self.settings_manager.get_launch_delay()
             self.delay_spinbox.setValue(delay)
+            
+            # Load browser settings
+            preferred_browser = self.settings_manager.settings.get("preferred_browser", "auto")
+            browser_map = {"auto": "Auto-detect", "chrome": "Chrome", "firefox": "Firefox", "edge": "Edge"}
+            display_name = browser_map.get(preferred_browser, "Auto-detect")
+            index = self.browser_combo.findText(display_name)
+            if index >= 0:
+                self.browser_combo.setCurrentIndex(index)
+            
+            timeout = self.settings_manager.settings.get("browser_timeout", 10)
+            self.timeout_spinbox.setValue(timeout)
     
     def browse_folder(self):
         """Open folder browser dialog"""
@@ -398,6 +445,14 @@ class SettingsDialog(QDialog):
         # Save settings
         self.settings_manager.set_game_folder(folder)
         self.settings_manager.set_launch_delay(self.delay_spinbox.value())
+        
+        # Save browser settings
+        browser_map = {"Auto-detect": "auto", "Chrome": "chrome", "Firefox": "firefox", "Edge": "edge"}
+        browser_key = browser_map.get(self.browser_combo.currentText(), "auto")
+        self.settings_manager.settings["preferred_browser"] = browser_key
+        self.settings_manager.settings["browser_timeout"] = self.timeout_spinbox.value()
+        self.settings_manager.save_settings()
+        
         self.accept()
     
     def show_message(self, msg_type, title, text):
@@ -492,6 +547,31 @@ class SettingsDialog(QDialog):
             QSpinBox:focus {
                 border-color: #2196f3;
                 color: #212121;
+            }
+            QComboBox {
+                border: 2px solid #e0e0e0;
+                border-radius: 4px;
+                padding: 8px;
+                background-color: #ffffff;
+                color: #212121;
+                font-size: 13px;
+                font-weight: 500;
+                min-width: 120px;
+            }
+            QComboBox:focus {
+                border-color: #2196f3;
+                color: #212121;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 20px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid #666666;
+                margin-right: 5px;
             }
             QPushButton {
                 background-color: #2196f3;

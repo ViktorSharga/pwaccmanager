@@ -6,6 +6,7 @@ A Windows desktop application for managing Perfect World game accounts with mult
 
 - **Account Management**: Add, edit, delete, and organize multiple game accounts
 - **Multi-Client Support**: Launch and manage multiple game clients simultaneously
+- **Browser Auto-Login**: Launch browsers with automatic credential filling for web interface
 - **Process Tracking**: Monitor running game instances and terminate them as needed
 - **Batch File Generation**: Automatically create batch files for quick game launching
 - **Account Import**: Scan folders to import existing account batch files
@@ -84,6 +85,7 @@ A Windows desktop application for managing Perfect World game accounts with mult
 - **Edit Account**: Click the menu button (⋮) next to an account and select "Edit"
 - **Delete Account**: Click the menu button (⋮) and select "Delete"
 - **Launch Account**: Click the play button (▶) or select accounts and click "Launch Selected"
+- **Open in Browser**: Click the browser button (🌐) to launch browser with auto-login
 - **Close Account**: Click the close button (✖) or use "Close Selected"
 
 ### Batch Operations
@@ -106,6 +108,14 @@ A Windows desktop application for managing Perfect World game accounts with mult
 - **Description**: Optional, for your reference
 - **Owner**: Optional, to track account ownership
 
+### Browser Auto-Login
+
+- Click the browser button (🌐) next to any account to launch a web browser
+- Browser opens in incognito/private mode for security
+- Login form is automatically filled with account credentials
+- Supports Chrome, Firefox, and Edge browsers
+- Configure preferred browser in Settings
+
 ## Troubleshooting
 
 ### Application won't start
@@ -127,6 +137,13 @@ A Windows desktop application for managing Perfect World game accounts with mult
 ### Process tracking issues
 - The app uses `psutil` which may require admin privileges
 - Try running as Administrator if processes aren't tracked properly
+
+### Browser auto-login issues
+- Ensure Chrome, Firefox, or Edge is installed
+- Check that the browser button is enabled (disabled if login/password missing)
+- For advanced auto-fill features, ensure Selenium is installed: `pip install selenium`
+- Browser may require WebDriver installation for full auto-fill functionality
+- Try different browsers if one doesn't work
 
 ## Security Notes
 

@@ -19,6 +19,7 @@ from core.account_manager import AccountManager, Account
 from core.settings_manager import SettingsManager
 from core.game_launcher import GameLauncher
 from core.batch_generator import BatchGenerator
+from core.browser_launcher import BrowserLauncher
 from ui.dialogs import AccountDialog, SettingsDialog
 
 
@@ -33,6 +34,7 @@ class MainWindow(QMainWindow):
         self.account_manager = AccountManager()
         self.game_launcher = None
         self.batch_generator = None
+        self.browser_launcher = BrowserLauncher()
         
         # Initialize game folder dependent components
         self.init_game_components()
@@ -384,7 +386,7 @@ class MainWindow(QMainWindow):
         self.table = QTableWidget()
         
         # Set columns
-        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
+        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Browser", "Actions"]
         self.table.setColumnCount(len(columns))
         self.table.setHorizontalHeaderLabels(columns)
         
@@ -456,7 +458,8 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(4, QHeaderView.Stretch)  # Description
         header.setSectionResizeMode(5, QHeaderView.Stretch)  # Owner
         header.resizeSection(6, 60)  # Server
-        header.resizeSection(7, 120)  # Actions
+        header.resizeSection(7, 70)  # Browser
+        header.resizeSection(8, 120)  # Actions
         
         # Set row height to accommodate buttons (24px button + 16px padding)
         self.table.verticalHeader().setDefaultSectionSize(40)
@@ -538,7 +541,7 @@ class MainWindow(QMainWindow):
     def update_header_checkbox_symbol(self):
         """Update the header checkbox symbol"""
         symbol = "☑" if self.master_checkbox_checked else "☐"
-        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Actions"]
+        columns = ["", "Login", "Password", "Character Name", "Description", "Owner", "Server", "Browser", "Actions"]
         columns[0] = symbol
         self.table.setHorizontalHeaderLabels(columns)
     
@@ -647,6 +650,52 @@ class MainWindow(QMainWindow):
         server_item.setTextAlignment(Qt.AlignVCenter | Qt.AlignCenter)
         self.table.setItem(row, 6, server_item)
         
+        # Browser button
+        browser_widget = QWidget()
+        browser_layout = QVBoxLayout(browser_widget)
+        browser_layout.setContentsMargins(5, 0, 5, 0)
+        browser_layout.setAlignment(Qt.AlignVCenter | Qt.AlignCenter)
+        
+        browser_btn = QPushButton("🌐")
+        browser_btn.setFixedSize(24, 24)
+        browser_btn.setToolTip("Open in Browser")
+        browser_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4caf50;
+                color: #ffffff;
+                border: 1px solid #388e3c;
+                border-radius: 2px;
+                font-size: 12px;
+                font-weight: 900;
+                font-family: Arial, sans-serif;
+                margin: 0px;
+                padding: 0px;
+            }
+            QPushButton:hover {
+                background-color: #66bb6a;
+                color: #ffffff;
+            }
+            QPushButton:pressed {
+                background-color: #388e3c;
+                color: #ffffff;
+            }
+            QPushButton:disabled {
+                background-color: #cccccc;
+                color: #666666;
+                border-color: #aaaaaa;
+            }
+        """)
+        
+        # Disable button if login or password is missing
+        if not account.login or not account.password:
+            browser_btn.setEnabled(False)
+            browser_btn.setToolTip("Username or password missing")
+        
+        browser_btn.clicked.connect(partial(self.launch_browser, row))
+        browser_layout.addWidget(browser_btn)
+        
+        self.table.setCellWidget(row, 7, browser_widget)
+        
         # Actions
         actions_widget = QWidget()
         actions_layout = QHBoxLayout(actions_widget)
@@ -748,7 +797,7 @@ class MainWindow(QMainWindow):
         menu_btn.clicked.connect(partial(self.show_row_menu, menu))
         actions_layout.addWidget(menu_btn)
         
-        self.table.setCellWidget(row, 7, actions_widget)
+        self.table.setCellWidget(row, 8, actions_widget)
         
         # Store account reference
         self.table.item(row, 1).setData(Qt.UserRole, account)
@@ -756,6 +805,89 @@ class MainWindow(QMainWindow):
     def show_row_menu(self, menu):
         """Show the row context menu"""
         menu.exec_(QCursor.pos())
+    
+    def launch_browser(self, row):
+        """Launch browser for account login"""
+        login_item = self.table.item(row, 1)
+        if not login_item:
+            return
+        
+        account = login_item.data(Qt.UserRole)
+        
+        # Validate credentials
+        if not account.login or not account.password:
+            self.show_message("warning", "Missing Credentials", 
+                             "Username or password is missing for this account.")
+            return
+        
+        # Get browser button to show loading state
+        browser_widget = self.table.cellWidget(row, 7)
+        if browser_widget:
+            browser_btn = browser_widget.findChild(QPushButton)
+            if browser_btn:
+                # Show loading state
+                browser_btn.setText("⟳")
+                browser_btn.setEnabled(False)
+                browser_btn.setToolTip("Launching browser...")
+        
+        # Get preferred browser from settings (default to auto)
+        preferred_browser = self.settings_manager.settings.get("preferred_browser", "auto")
+        
+        # Launch browser in a separate thread to avoid blocking UI
+        from PySide6.QtCore import QThread, QObject, Signal
+        
+        class BrowserLaunchWorker(QObject):
+            finished = Signal(bool, str)
+            
+            def __init__(self, browser_launcher, username, password, preferred_browser):
+                super().__init__()
+                self.browser_launcher = browser_launcher
+                self.username = username
+                self.password = password
+                self.preferred_browser = preferred_browser
+            
+            def launch(self):
+                try:
+                    success, message = self.browser_launcher.launch_account_browser(
+                        self.username, self.password, self.preferred_browser
+                    )
+                    self.finished.emit(success, message)
+                except Exception as e:
+                    self.finished.emit(False, f"Error: {str(e)}")
+        
+        # Create worker and thread
+        self.browser_thread = QThread()
+        self.browser_worker = BrowserLaunchWorker(
+            self.browser_launcher, account.login, account.password, preferred_browser
+        )
+        self.browser_worker.moveToThread(self.browser_thread)
+        
+        # Connect signals
+        self.browser_thread.started.connect(self.browser_worker.launch)
+        self.browser_worker.finished.connect(lambda success, msg: self._on_browser_launch_finished(row, success, msg))
+        self.browser_worker.finished.connect(self.browser_thread.quit)
+        self.browser_worker.finished.connect(self.browser_worker.deleteLater)
+        self.browser_thread.finished.connect(self.browser_thread.deleteLater)
+        
+        # Start thread
+        self.browser_thread.start()
+    
+    def _on_browser_launch_finished(self, row, success, message):
+        """Handle browser launch completion"""
+        # Restore browser button state
+        browser_widget = self.table.cellWidget(row, 7)
+        if browser_widget:
+            browser_btn = browser_widget.findChild(QPushButton)
+            if browser_btn:
+                browser_btn.setText("🌐")
+                browser_btn.setEnabled(True)
+                browser_btn.setToolTip("Open in Browser")
+        
+        # Show result message
+        if success:
+            self.status_bar.showMessage(message, 3000)
+        else:
+            self.show_message("warning", "Browser Launch Failed", message)
     
     def add_account(self):
         """Show add account dialog"""
@@ -814,6 +946,18 @@ class MainWindow(QMainWindow):
                 self.table.item(row, 4).setText(new_account.description)
                 self.table.item(row, 5).setText(new_account.owner)
                 self.table.item(row, 6).setText(getattr(new_account, 'server', 'Main'))
+                
+                # Update browser button state
+                browser_widget = self.table.cellWidget(row, 7)
+                if browser_widget:
+                    browser_btn = browser_widget.findChild(QPushButton)
+                    if browser_btn:
+                        if not new_account.login or not new_account.password:
+                            browser_btn.setEnabled(False)
+                            browser_btn.setToolTip("Username or password missing")
+                        else:
+                            browser_btn.setEnabled(True)
+                            browser_btn.setToolTip("Open in Browser")
     
     def delete_account(self, row):
         """Delete an account"""
@@ -1608,6 +1752,10 @@ class MainWindow(QMainWindow):
         """Handle window close event"""
         # Save window geometry
         self.settings_manager.set_window_geometry(self.saveGeometry())
+        
+        # Clean up browser profiles
+        if self.browser_launcher:
+            self.browser_launcher.cleanup_temp_profiles()
         
         # Terminate all running processes
         if self.game_launcher:
